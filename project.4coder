@@ -1,0 +1,96 @@
+version(1);
+
+project_name = "Hyped";
+
+patterns = {
+    "*.c",
+    "*.cpp",
+    "*.h",
+    "*.m",
+    "*.bat",
+    "*.sh",
+    "*.4coder"
+};
+
+blacklist_patterns = {
+    ".*",
+    "bin",
+    "bin-int",
+    "vcpkg"
+};
+
+load_paths_base = {
+    {
+        ".",
+        .relative = true,
+        .recursive = true,
+    },
+};
+
+load_paths = {
+    { load_paths_base, .os = "win", },
+};
+
+command_list = {
+    {
+        .name = "build-debug",
+        .out = "*build-debug*",
+        .footer_panel = true,
+        .save_dirty_files = true,
+        .cmd = {
+            { ".\build-debug.bat" , .os = "win" },
+        },
+    },
+{
+        .name = "run-debug",
+        .out = "*run-debug*",
+        .footer_panel = true,
+        .save_dirty_files = false,
+        .cmd = {
+            { ".\bin\Win-x64-Debug\Hyped.exe", .os = "win"   },
+        },
+    },
+    {
+        .name = "build-release",
+        .out = "*build-release*",
+        .footer_panel = true,
+        .save_dirty_files = true,
+        .cmd = {
+            { ".\build-release.bat --release" , .os = "win"   },
+        },
+    },
+    {
+        .name = "run-release",
+        .out = "*run-release*",
+        .footer_panel = true,
+        .save_dirty_files = false,
+        .cmd = {
+            { ".\bin\Win-x64-Release\Hyped.exe", .os = "win"   },
+        },
+    },
+    {
+        .name = "tests",
+        .out = "*tests*",
+        .footer_panel = true,
+        .save_dirty_files = false,
+        .cmd = {
+            { "./todo", .os = "win"   },
+        },
+    },
+    {
+        .name = "docs",
+        .out = "*docs*",
+        .footer_panel = true,
+        .save_dirty_files = false,
+        .cmd = {
+            { "./todo", .os = "win"   },
+        },
+    },
+};
+
+fkey_command[1] = "build-debug";
+fkey_command[2] = "run-debug";
+fkey_command[3] = "build-release";
+fkey_command[4] = "run-release";
+fkey_command[5] = "tests";
+fkey_command[6] = "docs";
