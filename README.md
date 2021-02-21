@@ -9,7 +9,7 @@ TODO brief description of the editor.
 
 # Building from source
 
-## Windows <img src="https://gitlab.com/lunar-matter/hyped/-/blob/master/media/windows-logo.png" width=24 valign="middle">
+## Windows <img src="./media/windows-logo.png" width=24 valign="middle">
 
 `cl` should be available in `PATH`. Search `Developer Command Prompt from VS 2019` and launch it. Use that terminal to run one of the build scripts:
 
