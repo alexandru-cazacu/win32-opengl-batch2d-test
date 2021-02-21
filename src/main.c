@@ -1,10 +1,8 @@
-#include <windows.h>
+#include "win32_lean_and_mean.c"
 #include <gl/gl.h>
 #include "gl/glext.h"
 #include "gl/wglext.h"
-
 #include "resources.h"
-
 #include "win32_crt.c"
 #include "hyper_types.h"
 
@@ -35,8 +33,6 @@ void __stdcall WinMainCRTStartup()
         HySwapBuffers(&window);
         Sleep(1);
     }
-    
-    Assert(0);
     
     ExitProcess(0);
 }

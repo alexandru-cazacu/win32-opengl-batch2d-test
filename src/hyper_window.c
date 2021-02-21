@@ -3,10 +3,162 @@
 /// @brief Represents a platform-indipendent window.
 typedef struct
 {
+    int borderless;        // is the window currently borderless
+    int borderless_resize; // should the window allow resizing by dragging the borders while borderless
+    int borderless_drag;   // should the window allow moving my dragging the client area
+    int borderless_shadow; // should the window display a native aero shadow while borderless
     HWND WindowHandle;
     b32 ShouldClose;
     HDC DeviceContext;
 } HyWindow;
+
+// we cannot just use WS_POPUP style
+// WS_THICKFRAME: without this the window cannot be resized and so aero snap, de-maximizing and minimizing won't work
+// WS_SYSMENU: enables the context menu with the move, close, maximize, minize... commands (shift + right-click on the task bar item)
+// WS_CAPTION: enables aero minimize animation/transition
+// WS_MAXIMIZEBOX, WS_MINIMIZEBOX: enable minimize/maximize
+typedef enum Style {
+    StyleWindowed        = WS_OVERLAPPEDWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+    StyleAeroBorderless  = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
+    StyleBasicBorderless = WS_POPUP            | WS_THICKFRAME              | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX
+} Style;
+
+internal int Win32IsMaximized(HWND hwnd)
+{
+    WINDOWPLACEMENT placement;
+    if (!GetWindowPlacement(hwnd, &placement)) {
+        return false;
+    }
+    
+    return placement.showCmd == SW_MAXIMIZE;
+}
+
+/* Adjust client rect to not spill over monitor edges when maximized.
+ * rect(in/out): in: proposed window rect, out: calculated client rect
+ * Does nothing if the window is not maximized.
+ */
+internal void Win32AdjustMaximizedClientRect(HWND window, RECT* rect)
+{
+    if (!Win32IsMaximized(window)) {
+        return;
+    }
+    
+    HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
+    if (!monitor) {
+        return;
+    }
+    
+    MONITORINFO monitorInfo = {0};
+    monitorInfo.cbSize = sizeof(monitorInfo);
+    if (!GetMonitorInfoA(monitor, &monitorInfo)) {
+        return;
+    }
+    
+    // when maximized, make the client area fill just the monitor (without task bar) rect,
+    // not the whole window rect which extends beyond the monitor.
+    *rect = monitorInfo.rcWork;
+    // TODO(alex): Check if works
+}
+
+internal int Win32IsCompositionEnabled()
+{
+    BOOL compositionEnabled = FALSE;
+    int success = DwmIsCompositionEnabled(&compositionEnabled) == S_OK;
+    return compositionEnabled && success;
+}
+
+internal Style Win32SelectBorderlessStyle()
+{
+    return Win32IsCompositionEnabled() ? StyleAeroBorderless : StyleBasicBorderless;
+}
+
+internal void Win32SetShadow(HWND handle, int enabled)
+{
+    if (Win32IsCompositionEnabled())
+    {
+        static const MARGINS shadowState[2] = {
+            { 0,0,0,0 }, { 1,1,1,1 }
+            //{ 0,0,0,0 }
+        };
+        DwmExtendFrameIntoClientArea(handle, &shadowState[enabled]);
+    }
+}
+
+internal void Win32SetBorderless(HyWindow* hyWindow, int enabled)
+{
+    Style newStyle = (enabled) ? Win32SelectBorderlessStyle() : StyleWindowed;
+    Style oldStyle = (Style)GetWindowLongPtrA(hyWindow->WindowHandle, GWL_STYLE);
+    
+    if (newStyle != oldStyle)
+    {
+        hyWindow->borderless = enabled;
+        
+        SetWindowLongPtrA(hyWindow->WindowHandle, GWL_STYLE, (LONG)newStyle);
+        
+        // when switching between borderless and windowed, restore appropriate shadow state
+        Win32SetShadow(hyWindow->WindowHandle, hyWindow->borderless_shadow && (newStyle != StyleWindowed));
+        
+        // redraw frame
+        SetWindowPos(hyWindow->WindowHandle, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
+        ShowWindow(hyWindow->WindowHandle, SW_SHOW);
+    }
+}
+
+static void Win32SetBorderlessShadow(HyWindow* hyWindow, int enabled)
+{
+    if (hyWindow->borderless)
+    {
+        hyWindow->borderless_shadow = enabled;
+        Win32SetShadow(hyWindow->WindowHandle, enabled);
+    }
+}
+
+static LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
+{
+    // identify borders and corners to allow resizing the window.
+    // Note: On Windows 10, windows behave differently and
+    // allow resizing outside the visible window frame.
+    // This implementation does not replicate that behavior.
+    const POINT border = {
+        GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER),
+        GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER)
+    };
+    RECT window;
+    if (!GetWindowRect(hyWindow->WindowHandle, &window))
+    {
+        return HTNOWHERE;
+    }
+    
+    const int drag = hyWindow->borderless_drag ? HTCAPTION : HTCLIENT;
+    
+    enum region_mask {
+        client = 0b0000,
+        left   = 0b0001,
+        right  = 0b0010,
+        top    = 0b0100,
+        bottom = 0b1000,
+    };
+    
+    const int result =
+        left    * (cursor.x <  (window.left   + border.x)) |
+        right   * (cursor.x >= (window.right  - border.x)) |
+        top     * (cursor.y <  (window.top    + border.y)) |
+        bottom  * (cursor.y >= (window.bottom - border.y));
+    
+    switch (result)
+    {
+        case left          : return hyWindow->borderless_resize ? HTLEFT        : drag;
+        case right         : return hyWindow->borderless_resize ? HTRIGHT       : drag;
+        case top           : return hyWindow->borderless_resize ? HTTOP         : drag;
+        case bottom        : return hyWindow->borderless_resize ? HTBOTTOM      : drag;
+        case top | left    : return hyWindow->borderless_resize ? HTTOPLEFT     : drag;
+        case top | right   : return hyWindow->borderless_resize ? HTTOPRIGHT    : drag;
+        case bottom | left : return hyWindow->borderless_resize ? HTBOTTOMLEFT  : drag;
+        case bottom | right: return hyWindow->borderless_resize ? HTBOTTOMRIGHT : drag;
+        case client        : return drag;
+        default            : return HTNOWHERE;
+    }
+}
 
 internal b32 HyWindowShouldClose(HyWindow* window)
 {
@@ -39,71 +191,107 @@ internal void HyProcessPendingMessages(HyWindow* window)
     }
 }
 
-internal LRESULT CALLBACK Win32WindowCallback(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
+internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     // NOTE(alex): Only on windows. Probably we are still bootrsapping the OGL context so we skip message handling to avoid quitting the window prematurely (if for exemple we destroy the trampoline context).
-    if (!g_HyperRendererInitialized) {
-        return DefWindowProcA(window, message, wParam, lParam);;
-    }
-    
-    LRESULT result = 0;
-    
-    switch(message) {
-        case WM_ACTIVATEAPP: {
 #if 0
-            HDC deviceContext = GetDC(window);
-            Vec2 dimension =  GetWindowDimension();
-            Win32InitOpenGL(window);
-            Win32DisplayBufferInWindow(deviceContext, dimension.Width, dimension.Height);
+    if (!g_HyperRendererInitialized) {
+        return DefWindowProcA(hwnd, msg, wParam, lParam);;
+    }
 #endif
-        } break;
-        
-        // TODO(Alex): Possibily ask for confirmation 
-        case WM_CLOSE: { // X pressed
-            DestroyWindow(window);
-        } break;
-        
-        case WM_DESTROY: { // After the window is removed, before all child windows are destroyed
-            PostQuitMessage(0);
-        } break;
-        
-        case WM_SYSKEYDOWN:
-        case WM_SYSKEYUP:
-        case WM_KEYDOWN:
-        case WM_KEYUP: {
-            Assert(!"Keyboard input came in through a non-dispatch message");
-        } break;
-        
-        case WM_SIZE: {
-            //Win32WindowDimension dimension =  GetWindowDimension(window);
-            //Win32ResizeDIBSection(&g_Backbuffer, dimension.Width, dimension.Height);
-        } break;
-        
-        default: {
-            result = DefWindowProcA(window, message, wParam, lParam);
-        } break;
+    
+    if (msg == WM_NCCREATE)
+    {
+        LPVOID userdata = ((CREATESTRUCTW*)lParam)->lpCreateParams;
+        // store window instance pointer in window user data
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)userdata);
     }
     
-    return result;
+    HyWindow* hyWindow = (HyWindow*)(GetWindowLongPtrA(hwnd, GWLP_USERDATA));
+    
+    if (hyWindow) {
+        switch(msg) {
+#if 0
+            case WM_ACTIVATEAPP: {
+                HDC deviceContext = GetDC(window);
+                Vec2 dimension =  GetWindowDimension();
+                Win32InitOpenGL(window);
+                Win32DisplayBufferInWindow(deviceContext, dimension.Width, dimension.Height);
+            } break;
+#endif
+            
+            case WM_NCCALCSIZE: {
+                if (wParam == TRUE && hyWindow->borderless) {
+                    NCCALCSIZE_PARAMS params = *(NCCALCSIZE_PARAMS*)lParam;
+                    Win32AdjustMaximizedClientRect(hwnd, &params.rgrc[0]);
+                    return 0;
+                }
+            } break;
+            
+            case WM_NCHITTEST: {
+                // When we have no border or title bar, we need to perform our
+                // own hit testing to allow resizing and moving.
+                if (hyWindow->borderless) {
+                    POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                    return Win32HitTest(hyWindow, p);
+                }
+            } break;
+            
+            case WM_NCACTIVATE: {
+                if (!Win32IsCompositionEnabled()) {
+                    // Prevents window frame reappearing on window activation
+                    // in "basic" theme, where no aero shadow is present.
+                    return 1;
+                }
+            } break;
+            
+            // TODO(Alex): Possibily ask for confirmation 
+            case WM_CLOSE: { // X pressed
+                DestroyWindow(hwnd);
+            } break;
+            
+            case WM_DESTROY: { // After the window is removed, before all child windows are destroyed
+                PostQuitMessage(0);
+            } break;
+            
+#if 0
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN:
+            case WM_KEYUP: {
+                //Assert(!"Keyboard input came in through a non-dispatch message");
+            } break;
+#endif
+            
+#if 0
+            case WM_SIZE: {
+                //Win32WindowDimension dimension =  GetWindowDimension(window);
+                //Win32ResizeDIBSection(&g_Backbuffer, dimension.Width, dimension.Height);
+            } break;
+#endif
+        }
+    }
+    
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 internal void HySwapBuffers(HyWindow* window)
 {
-    SwapBuffers(window->DeviceContext);
+    //SwapBuffers(window->DeviceContext);
 }
 
 /// @brief Creates a new Window with a modern OpenGL context.
-internal int HyCreateWindow(HyWindow* window, const char* title)
+internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
 {
     if (!g_HyperEngineInitialized) {
         return HY_NOT_INITIALIZED;
     }
     
-    WNDCLASSA window_class = {0};
     HINSTANCE hInstance = GetModuleHandle(NULL);
     
+    WNDCLASSA window_class = {0};
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-    window_class.lpfnWndProc = Win32WindowCallback;
+    window_class.lpfnWndProc = Win32WndProc;
     window_class.hInstance = hInstance;
     window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
     window_class.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(101));
@@ -114,13 +302,14 @@ internal int HyCreateWindow(HyWindow* window, const char* title)
     
     // NOTE(alex): It's dangerous to go alone. Take this: https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
     
+#if 0    
     HWND fakeWND = CreateWindow("HyperWindowClass", // window class
                                 "Fake Window",      // title
-                                WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
-                                0, 0,                       // position x, y
-                                1, 1,                       // width, height
+                                (DWORD)StyleAeroBorderless, // style
+                                CW_USEDEFAULT, CW_USEDEFAULT, // x, y
+                                CW_USEDEFAULT, CW_USEDEFAULT, // width, height
                                 NULL, NULL,                 // parent window, menu
-                                hInstance, NULL);           // instance, param
+                                hInstance, hyWindow);       // instance, param
     
     HDC fakeDC = GetDC(fakeWND);        // Device Context
     
@@ -170,15 +359,19 @@ internal int HyCreateWindow(HyWindow* window, const char* title)
         MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
         return HY_PLATFORM_ERROR;
     }
+#endif
     
     HWND WND = CreateWindowA(window_class.lpszClassName, title, // class name, window name
-                             WS_VISIBLE | WS_OVERLAPPEDWINDOW, // style
+                             (DWORD)StyleAeroBorderless, // style
                              CW_USEDEFAULT, CW_USEDEFAULT, // x, y
                              CW_USEDEFAULT, CW_USEDEFAULT, // width, height
-                             0, 0, hInstance, 0); // parent window, menu, instance. param
+                             0, 0, hInstance, hyWindow); // parent window, menu, instance. param
+    
+    hyWindow->WindowHandle = WND;
     
     HDC DC = GetDC(WND);
     
+#if 0
     const int pixelAttribs[] = {
         WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
         WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
@@ -228,14 +421,22 @@ internal int HyCreateWindow(HyWindow* window, const char* title)
         MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
         return HY_PLATFORM_ERROR;
     }
+#endif
     
     g_HyperRendererInitialized = true;
     
-    SetWindowTextA(WND, (LPCSTR)glGetString(GL_VERSION));
-    ShowWindow(WND, TRUE);
+    hyWindow->WindowHandle = WND;
+    //hyWindow->DeviceContext = DC;
     
-    window->WindowHandle = WND;
-    window->DeviceContext = DC;
+    hyWindow->borderless = true;
+    hyWindow->borderless_resize = true;
+    hyWindow->borderless_drag = true;
+    hyWindow->borderless_shadow = true;
+    
+    Win32SetBorderless(hyWindow, true);
+    Win32SetBorderlessShadow(hyWindow, true);
+    //SetWindowTextA(WND, (LPCSTR)glGetString(GL_VERSION));
+    ShowWindow(hyWindow->WindowHandle, SW_SHOW);
     
     return HY_NO_ERROR;
 }
