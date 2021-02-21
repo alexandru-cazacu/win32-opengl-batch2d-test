@@ -13,17 +13,19 @@ if not exist %binIntDir%\resources.res (
 )
 
 set sharedCompilerFlags=^
-	-Oi -MD -O2 -GR- -EHa- -FC -nologo -std:c++17 ^
+	-Oi -MD -O2 -GR- -EHa- -FC -nologo -std:c++17 /GS- /Gs9999999 ^
 	-W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 ^
 	-Fe:%binDir%\%prjName% ^
 	-Fo:%binIntDir%\%prjName% ^
 	-I %cd%\src ^
+	-I %cd%\deps ^
 	-I %cd%\resources ^
 	resources.res
 
 
-set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:windows -LIBPATH:%binIntDir% -NODEFAULTLIB
-set  sharedLibs=kernel32.lib user32.lib
+set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:windows ^
+					   -LIBPATH:%binIntDir% -NODEFAULTLIB /STACK:0x100000,0x100000
+set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib
 
 call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
