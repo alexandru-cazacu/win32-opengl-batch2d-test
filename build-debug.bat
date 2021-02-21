@@ -22,6 +22,7 @@ set sharedCompilerFlags=^
     -I %cd%\src ^
     -I %cd%\deps ^
     -I %cd%\resources ^
+    -D HY_SLOW ^
     resources.res
 
 set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:windows ^

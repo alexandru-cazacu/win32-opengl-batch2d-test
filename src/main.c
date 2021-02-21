@@ -36,5 +36,7 @@ void __stdcall WinMainCRTStartup()
         Sleep(1);
     }
     
+    Assert(0);
+    
     ExitProcess(0);
 }

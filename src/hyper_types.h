@@ -40,7 +40,7 @@ typedef int b32;
 #define HY_MOUSE_BUTTON_MIDDLE   HY_MOUSE_BUTTON_3
 
 #if HY_SLOW
-#define Assert(expression) if (!(expression)) { *(int*)0 = 0; }
+#define Assert(expression) if (!(expression)) { if (IsDebuggerPresent()) __debugbreak(); else MessageBox(NULL, "Assertion failed but no debugger is attached.", "Hyper", MB_ICONERROR); }
 #else
 #define Assert(expression)
 #endif
