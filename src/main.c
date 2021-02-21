@@ -1,21 +1,32 @@
-#include "stdio.h"
 #include <windows.h>
 
 #include "resources.h"
 
+#include "hyper_types.h"
+
+static int g_HyperEngineInitialized = true;
+static int g_HyperLastErrorCode = 0;
+
+#include "hyper_window.c"
+
+// TODO(alex): What is the right way to add an icon without Visual Studio?
+
 void __stdcall WinMainCRTStartup()
 {
-    HICON hIcon1 = LoadIcon(NULL, MAKEINTRESOURCE(101));
-    HMODULE hModule = GetModuleHandle(0);
-    HDC hdc = GetDC(NULL);
+    HyWindow window = {0};
+    hy_create_window(&window, "Hyped");
     
-    DrawIcon(hdc, 10, 20, hIcon1);
+    if (!&window)
+    {
+        MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);
+        ExitProcess(0);
+    }
     
-    MessageBoxA(NULL, "Ciao", "TextNoCRT", MB_ICONSTOP);
+    while (!HyperWindowShouldClose(&window))
+    {
+        HyperProcessPendingMessages(&window);
+        Sleep(1);
+    }
     
     ExitProcess(0);
-}
-
-void main() {
-
 }
