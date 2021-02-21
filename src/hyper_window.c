@@ -106,7 +106,7 @@ HyWindow* hy_create_window(HyWindow* window, const char* title)
     window_class.hInstance = hInst;
     // window_class.hCursor = ; // TODO(Alex): implement
     window_class.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(101));
-    window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    //window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH); // TODO(alex): can do with GL?
     window_class.lpszClassName = "HyperWindowClass";
     
     HWND handle = NULL;

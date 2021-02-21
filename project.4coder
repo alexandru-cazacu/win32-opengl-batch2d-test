@@ -69,12 +69,21 @@ command_list = {
         },
     },
     {
-        .name = "tests",
-        .out = "*tests*",
+        .name = "build-tests",
+        .out = "*build-tests*",
         .footer_panel = true,
         .save_dirty_files = false,
         .cmd = {
-            { "./todo", .os = "win"   },
+            { ".\build-tests.bat" , .os = "win" },
+        },
+    },
+    {
+        .name = "run-tests",
+        .out = "*run-tests*",
+        .footer_panel = true,
+        .save_dirty_files = false,
+        .cmd = {
+            { ".\bin\Win-x64-Tests\Hyped.exe" , .os = "win" },
         },
     },
     {
@@ -92,5 +101,6 @@ fkey_command[1] = "build-debug";
 fkey_command[2] = "run-debug";
 fkey_command[3] = "build-release";
 fkey_command[4] = "run-release";
-fkey_command[5] = "tests";
-fkey_command[6] = "docs";
+fkey_command[5] = "build-tests";
+fkey_command[6] = "run-tests";
+fkey_command[7] = "docs";
