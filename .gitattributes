@@ -1,0 +1,2 @@
+*.h linguist-language=C++
+project.4coder -linguist-detectable

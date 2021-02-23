@@ -1,149 +1,158 @@
-//~ Error management
+#define glActiveTexture ((PFNGLACTIVETEXTUREPROC)gl_function_pointers[0]) 
+#define glDebugMessageCallbackAMD ((PFNGLDEBUGMESSAGECALLBACKAMDPROC)gl_function_pointers[1]) 
+#define glDebugMessageEnableAMD ((PFNGLDEBUGMESSAGEENABLEAMDPROC)gl_function_pointers[2]) 
+#define glDebugMessageInsertAMD ((PFNGLDEBUGMESSAGEINSERTAMDPROC)gl_function_pointers[3]) 
+#define glGetDebugMessageLogAMD ((PFNGLGETDEBUGMESSAGELOGAMDPROC)gl_function_pointers[4]) 
+#define glDebugMessageCallback ((PFNGLDEBUGMESSAGECALLBACKPROC)gl_function_pointers[5]) 
+#define glDebugMessageControl ((PFNGLDEBUGMESSAGECONTROLPROC)gl_function_pointers[6]) 
+#define glGetActiveUniformBlockName ((PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)gl_function_pointers[7]) 
+#define glGetActiveUniformBlockiv ((PFNGLGETACTIVEUNIFORMBLOCKIVPROC)gl_function_pointers[8]) 
+#define glGetActiveUniformsiv ((PFNGLGETACTIVEUNIFORMSIVPROC)gl_function_pointers[9]) 
+#define glGetActiveUniformName ((PFNGLGETACTIVEUNIFORMNAMEPROC)gl_function_pointers[10]) 
+#define glCompileShader ((PFNGLCOMPILESHADERPROC)gl_function_pointers[11]) 
+#define glGetShaderiv ((PFNGLGETSHADERIVPROC)gl_function_pointers[12]) 
+#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)gl_function_pointers[13]) 
+#define glCreateProgram ((PFNGLCREATEPROGRAMPROC)gl_function_pointers[14]) 
+#define glProgramBinary ((PFNGLPROGRAMBINARYPROC)gl_function_pointers[15]) 
+#define glCreateShader ((PFNGLCREATESHADERPROC)gl_function_pointers[16]) 
+#define glShaderSource ((PFNGLSHADERSOURCEPROC)gl_function_pointers[17]) 
+#define glDeleteShader ((PFNGLDELETESHADERPROC)gl_function_pointers[18]) 
+#define glGetProgramiv ((PFNGLGETPROGRAMIVPROC)gl_function_pointers[19]) 
+#define glAttachShader ((PFNGLATTACHSHADERPROC)gl_function_pointers[20]) 
+#define glProgramParameteri ((PFNGLPROGRAMPARAMETERIPROC)gl_function_pointers[21]) 
+#define glLinkProgram ((PFNGLLINKPROGRAMPROC)gl_function_pointers[22]) 
+#define glDeleteProgram ((PFNGLDELETEPROGRAMPROC)gl_function_pointers[23]) 
+#define glUseProgram ((PFNGLUSEPROGRAMPROC)gl_function_pointers[24]) 
+#define glGetUniformLocation ((PFNGLGETUNIFORMLOCATIONPROC)gl_function_pointers[25]) 
+#define glGetUniformBlockIndex ((PFNGLGETUNIFORMBLOCKINDEXPROC)gl_function_pointers[26]) 
+#define glGetProgramBinary ((PFNGLGETPROGRAMBINARYPROC)gl_function_pointers[27]) 
+#define glGenVertexArrays ((PFNGLGENVERTEXARRAYSPROC)gl_function_pointers[28]) 
+#define glBindVertexArray ((PFNGLBINDVERTEXARRAYPROC)gl_function_pointers[29]) 
+#define glEnableVertexAttribArray ((PFNGLENABLEVERTEXATTRIBARRAYPROC)gl_function_pointers[30]) 
+#define glGenBuffers ((PFNGLGENBUFFERSPROC)gl_function_pointers[31]) 
+#define glBindBuffer ((PFNGLBINDBUFFERPROC)gl_function_pointers[32]) 
+#define glBufferData ((PFNGLBUFFERDATAPROC)gl_function_pointers[33]) 
+#define glVertexAttribPointer ((PFNGLVERTEXATTRIBPOINTERPROC)gl_function_pointers[34]) 
+#define glDeleteBuffers ((PFNGLDELETEBUFFERSPROC)gl_function_pointers[35]) 
+#define glDeleteVertexArrays ((PFNGLDELETEVERTEXARRAYSPROC)gl_function_pointers[36]) 
+#define glUniform1f ((PFNGLUNIFORM1FPROC)gl_function_pointers[37]) 
+#define glUniform3fv ((PFNGLUNIFORM3FVPROC)gl_function_pointers[38]) 
+#define glUniform4fv ((PFNGLUNIFORM4FVPROC)gl_function_pointers[39]) 
+#define glUniformMatrix4fv ((PFNGLUNIFORMMATRIX4FVPROC)gl_function_pointers[40]) 
+#define glBindBufferBase ((PFNGLBINDBUFFERBASEPROC)gl_function_pointers[41]) 
+#define glDispatchCompute ((PFNGLDISPATCHCOMPUTEPROC)gl_function_pointers[42]) 
+#define glMemoryBarrier ((PFNGLMEMORYBARRIERPROC)gl_function_pointers[43]) 
+#define glMultiDrawArrays ((PFNGLMULTIDRAWARRAYSPROC)gl_function_pointers[44]) 
+#define glDrawBuffers ((PFNGLDRAWBUFFERSPROC)gl_function_pointers[45]) 
+#define glGenFramebuffers ((PFNGLGENFRAMEBUFFERSPROC)gl_function_pointers[46]) 
+#define glFramebufferTexture2D ((PFNGLFRAMEBUFFERTEXTURE2DPROC)gl_function_pointers[47]) 
+#define glCheckFramebufferStatus ((PFNGLCHECKFRAMEBUFFERSTATUSPROC)gl_function_pointers[48]) 
+#define glBindFramebuffer ((PFNGLBINDFRAMEBUFFERPROC)gl_function_pointers[49]) 
+#define glDeleteFramebuffers ((PFNGLDELETEFRAMEBUFFERSPROC)gl_function_pointers[50]) 
+#define glGetQueryObjectiv ((PFNGLGETQUERYOBJECTIVPROC)gl_function_pointers[51]) 
+#define glGetQueryObjectui64v ((PFNGLGETQUERYOBJECTUI64VPROC)gl_function_pointers[52]) 
+#define glTexImage2DMultisample ((PFNGLTEXIMAGE2DMULTISAMPLEPROC)gl_function_pointers[53]) 
+#define glGenerateMipmap ((PFNGLGENERATEMIPMAPPROC)gl_function_pointers[54]) 
+#define glUniform1i ((PFNGLUNIFORM1IPROC)gl_function_pointers[55]) 
+#define glGetAttribLocation ((PFNGLGETATTRIBLOCATIONPROC)gl_function_pointers[56]) 
+#define glBufferSubData ((PFNGLBUFFERSUBDATAPROC)gl_function_pointers[57]) 
+#define glUniform4iv ((PFNGLUNIFORM4IVPROC)gl_function_pointers[58]) 
 
-typedef void (APIENTRYP PFNGLGENERATEMIPMAPPROC)(GLenum target);
-GLAPI PFNGLGENERATEMIPMAPPROC glad_glGenerateMipmap;
-#define glGenerateMipmap glad_glGenerateMipmap
-typedef void (APIENTRYP PFNGLACTIVETEXTUREPROC)(GLenum texture);
-GLAPI PFNGLACTIVETEXTUREPROC glad_glActiveTexture;
-#define glActiveTexture glad_glActiveTexture
-typedef void (APIENTRYP PFNGLDELETEFRAMEBUFFERSPROC)(GLsizei n, const GLuint *framebuffers);
-GLAPI PFNGLDELETEFRAMEBUFFERSPROC glad_glDeleteFramebuffers;
-#define glDeleteFramebuffers glad_glDeleteFramebuffers
-typedef void (APIENTRYP PFNGLDELETERENDERBUFFERSPROC)(GLsizei n, const GLuint *renderbuffers);
-GLAPI PFNGLDELETERENDERBUFFERSPROC glad_glDeleteRenderbuffers;
-#define glDeleteRenderbuffers glad_glDeleteRenderbuffers
-typedef void (APIENTRYP PFNGLGENFRAMEBUFFERSPROC)(GLsizei n, GLuint *framebuffers);
-GLAPI PFNGLGENFRAMEBUFFERSPROC glad_glGenFramebuffers;
-#define glGenFramebuffers glad_glGenFramebuffers
-typedef void (APIENTRYP PFNGLBINDFRAMEBUFFERPROC)(GLenum target, GLuint framebuffer);
-GLAPI PFNGLBINDFRAMEBUFFERPROC glad_glBindFramebuffer;
-#define glBindFramebuffer glad_glBindFramebuffer
-typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTURE2DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-GLAPI PFNGLFRAMEBUFFERTEXTURE2DPROC glad_glFramebufferTexture2D;
-#define glFramebufferTexture2D glad_glFramebufferTexture2D
-typedef void (APIENTRYP PFNGLGENRENDERBUFFERSPROC)(GLsizei n, GLuint *renderbuffers);
-GLAPI PFNGLGENRENDERBUFFERSPROC glad_glGenRenderbuffers;
-#define glGenRenderbuffers glad_glGenRenderbuffers
-typedef void (APIENTRYP PFNGLBINDRENDERBUFFERPROC)(GLenum target, GLuint renderbuffer);
-GLAPI PFNGLBINDRENDERBUFFERPROC glad_glBindRenderbuffer;
-#define glBindRenderbuffer glad_glBindRenderbuffer
-typedef void (APIENTRYP PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-GLAPI PFNGLRENDERBUFFERSTORAGEPROC glad_glRenderbufferStorage;
-#define glRenderbufferStorage glad_glRenderbufferStorage
-typedef void (APIENTRYP PFNGLFRAMEBUFFERRENDERBUFFERPROC)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-GLAPI PFNGLFRAMEBUFFERRENDERBUFFERPROC glad_glFramebufferRenderbuffer;
-#define glFramebufferRenderbuffer glad_glFramebufferRenderbuffer
-typedef GLenum (APIENTRYP PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
-GLAPI PFNGLCHECKFRAMEBUFFERSTATUSPROC glad_glCheckFramebufferStatus;
-#define glCheckFramebufferStatus glad_glCheckFramebufferStatus
-typedef void (APIENTRYP PFNGLGETSHADERIVPROC)(GLuint shader, GLenum pname, GLint *params);
-GLAPI PFNGLGETSHADERIVPROC glad_glGetShaderiv;
-#define glGetShaderiv glad_glGetShaderiv
-typedef void (APIENTRYP PFNGLGETSHADERINFOLOGPROC)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-GLAPI PFNGLGETSHADERINFOLOGPROC glad_glGetShaderInfoLog;
-#define glGetShaderInfoLog glad_glGetShaderInfoLog
-typedef void (APIENTRYP PFNGLGETPROGRAMIVPROC)(GLuint program, GLenum pname, GLint *params);
-GLAPI PFNGLGETPROGRAMIVPROC glad_glGetProgramiv;
-#define glGetProgramiv glad_glGetProgramiv
-typedef void (APIENTRYP PFNGLGETPROGRAMINFOLOGPROC)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-GLAPI PFNGLGETPROGRAMINFOLOGPROC glad_glGetProgramInfoLog;
-#define glGetProgramInfoLog glad_glGetProgramInfoLog
-typedef void (APIENTRYP PFNGLCREATEBUFFERSPROC)(GLsizei n, GLuint *buffers);
-GLAPI PFNGLCREATEBUFFERSPROC glad_glCreateBuffers;
-#define glCreateBuffers glad_glCreateBuffers
-typedef void (APIENTRYP PFNGLBINDBUFFERPROC)(GLenum target, GLuint buffer);
-GLAPI PFNGLBINDBUFFERPROC glad_glBindBuffer;
-#define glBindBuffer glad_glBindBuffer
-typedef void (APIENTRYP PFNGLBUFFERDATAPROC)(GLenum target, GLsizeiptr size, const void *data, GLenum usage);
-GLAPI PFNGLBUFFERDATAPROC glad_glBufferData;
-#define glBufferData glad_glBufferData
-typedef void (APIENTRYP PFNGLDELETEBUFFERSPROC)(GLsizei n, const GLuint *buffers);
-GLAPI PFNGLDELETEBUFFERSPROC glad_glDeleteBuffers;
-#define glDeleteBuffers glad_glDeleteBuffers
-typedef void (APIENTRYP PFNGLBUFFERSUBDATAPROC)(GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
-GLAPI PFNGLBUFFERSUBDATAPROC glad_glBufferSubData;
-#define glBufferSubData glad_glBufferSubData
-typedef void (APIENTRYP PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint *arrays);
-GLAPI PFNGLGENVERTEXARRAYSPROC glad_glGenVertexArrays;
-#define glGenVertexArrays glad_glGenVertexArrays
-typedef void (APIENTRYP PFNGLBINDVERTEXARRAYPROC)(GLuint array);
-GLAPI PFNGLBINDVERTEXARRAYPROC glad_glBindVertexArray;
-#define glBindVertexArray glad_glBindVertexArray
-typedef void (APIENTRYP PFNGLENABLEVERTEXATTRIBARRAYPROC)(GLuint index);
-GLAPI PFNGLENABLEVERTEXATTRIBARRAYPROC glad_glEnableVertexAttribArray;
-#define glEnableVertexAttribArray glad_glEnableVertexAttribArray
-typedef void (APIENTRYP PFNGLVERTEXATTRIBPOINTERPROC)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
-GLAPI PFNGLVERTEXATTRIBPOINTERPROC glad_glVertexAttribPointer;
-#define glVertexAttribPointer glad_glVertexAttribPointer
-typedef GLuint (APIENTRYP PFNGLCREATESHADERPROC)(GLenum type);
-GLAPI PFNGLCREATESHADERPROC glad_glCreateShader;
-#define glCreateShader glad_glCreateShader
-typedef void (APIENTRYP PFNGLSHADERSOURCEPROC)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
-GLAPI PFNGLSHADERSOURCEPROC glad_glShaderSource;
-#define glShaderSource glad_glShaderSource
-typedef void (APIENTRYP PFNGLCOMPILESHADERPROC)(GLuint shader);
-GLAPI PFNGLCOMPILESHADERPROC glad_glCompileShader;
-#define glCompileShader glad_glCompileShader
-typedef GLuint (APIENTRYP PFNGLCREATEPROGRAMPROC)(void);
-GLAPI PFNGLCREATEPROGRAMPROC glad_glCreateProgram;
-#define glCreateProgram glad_glCreateProgram
-typedef void (APIENTRYP PFNGLATTACHSHADERPROC)(GLuint program, GLuint shader);
-GLAPI PFNGLATTACHSHADERPROC glad_glAttachShader;
-#define glAttachShader glad_glAttachShader
-typedef void (APIENTRYP PFNGLLINKPROGRAMPROC)(GLuint program);
-GLAPI PFNGLLINKPROGRAMPROC glad_glLinkProgram;
-#define glLinkProgram glad_glLinkProgram
-typedef void (APIENTRYP PFNGLDELETESHADERPROC)(GLuint shader);
-GLAPI PFNGLDELETESHADERPROC glad_glDeleteShader;
-#define glDeleteShader glad_glDeleteShader
-typedef void (APIENTRYP PFNGLDETACHSHADERPROC)(GLuint program, GLuint shader);
-GLAPI PFNGLDETACHSHADERPROC glad_glDetachShader;
-#define glDetachShader glad_glDetachShader
-typedef GLint (APIENTRYP PFNGLGETUNIFORMLOCATIONPROC)(GLuint program, const GLchar *name);
-GLAPI PFNGLGETUNIFORMLOCATIONPROC glad_glGetUniformLocation;
-#define glGetUniformLocation glad_glGetUniformLocation
-typedef void (APIENTRYP PFNGLDELETEPROGRAMPROC)(GLuint program);
-GLAPI PFNGLDELETEPROGRAMPROC glad_glDeleteProgram;
-#define glDeleteProgram glad_glDeleteProgram
-typedef void (APIENTRYP PFNGLUSEPROGRAMPROC)(GLuint program);
-GLAPI PFNGLUSEPROGRAMPROC glad_glUseProgram;
-#define glUseProgram glad_glUseProgram
-typedef void (APIENTRYP PFNGLUNIFORM1IPROC)(GLint location, GLint v0);
-GLAPI PFNGLUNIFORM1IPROC glad_glUniform1i;
-#define glUniform1i glad_glUniform1i
-typedef void (APIENTRYP PFNGLUNIFORM4FPROC)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
-GLAPI PFNGLUNIFORM4FPROC glad_glUniform4f;
-#define glUniform4f glad_glUniform4f
-typedef void (APIENTRYP PFNGLUNIFORM3FPROC)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
-GLAPI PFNGLUNIFORM3FPROC glad_glUniform3f;
-#define glUniform3f glad_glUniform3f
-typedef void (APIENTRYP PFNGLUNIFORM1FPROC)(GLint location, GLfloat v0);
-GLAPI PFNGLUNIFORM1FPROC glad_glUniform1f;
-#define glUniform1f glad_glUniform1f
-typedef void (APIENTRYP PFNGLUNIFORMMATRIX4FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-GLAPI PFNGLUNIFORMMATRIX4FVPROC glad_glUniformMatrix4fv;
-#define glUniformMatrix4fv glad_glUniformMatrix4fv
-typedef void (APIENTRYP PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint *arrays);
-GLAPI PFNGLDELETEVERTEXARRAYSPROC glad_glDeleteVertexArrays;
-#define glDeleteVertexArrays glad_glDeleteVertexArrays
-typedef void (APIENTRYP PFNGLGENBUFFERSPROC)(GLsizei n, GLuint *buffers);
-GLAPI PFNGLGENBUFFERSPROC glad_glGenBuffers;
-#define glGenBuffers glad_glGenBuffers
-typedef void (APIENTRYP PFNGLBINDTEXTUREUNITPROC)(GLuint unit, GLuint texture);
-GLAPI PFNGLBINDTEXTUREUNITPROC glad_glBindTextureUnit;
-#define glBindTextureUnit glad_glBindTextureUnit
-typedef void (APIENTRYP PFNGLUNIFORM1IVPROC)(GLint location, GLsizei count, const GLint *value);
-GLAPI PFNGLUNIFORM1IVPROC glad_glUniform1iv;
-#define glUniform1iv glad_glUniform1iv
-typedef void (APIENTRYP PFNGLDRAWELEMENTSPROC)(GLenum mode, GLsizei count, GLenum type, const void *indices);
-GLAPI PFNGLDRAWELEMENTSPROC glad_glDrawElements;
-#define glDrawElements glad_glDrawElements
-typedef void (APIENTRYP PFNGLDEBUGMESSAGECONTROLPROC)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
-GLAPI PFNGLDEBUGMESSAGECONTROLPROC glad_glDebugMessageControl;
-#define glDebugMessageControl glad_glDebugMessageControl
-typedef void (APIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC)(GLDEBUGPROC callback, const void *userParam);
-GLAPI PFNGLDEBUGMESSAGECALLBACKPROC glad_glDebugMessageCallback;
-#define glDebugMessageCallback glad_glDebugMessageCallback
+// https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
+// https://gist.github.com/seece/9f5f3069130c4fe642f4fd5e7375816a
+static void *GetAnyGLFuncAddress(const char *name)
+{
+    void *p = (void *)wglGetProcAddress(name);
+    if (p == 0 ||
+        (p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+        (p == (void*)-1))
+    {
+        HMODULE module = LoadLibraryA("opengl32.dll");
+        p = (void *)GetProcAddress(module, name);
+    }
+    
+    return p;
+}
+
+const char* gl_function_names[] = { 
+    "glActiveTexture", 
+    "glDebugMessageCallbackAMD", 
+    "glDebugMessageEnableAMD", 
+    "glDebugMessageInsertAMD", 
+    "glGetDebugMessageLogAMD", 
+    "glDebugMessageCallback", 
+    "glDebugMessageControl", 
+    "glGetActiveUniformBlockName", 
+    "glGetActiveUniformBlockiv", 
+    "glGetActiveUniformsiv", 
+    "glGetActiveUniformName", 
+    "glCompileShader", 
+    "glGetShaderiv", 
+    "glGetShaderInfoLog", 
+    "glCreateProgram", 
+    "glProgramBinary", 
+    "glCreateShader", 
+    "glShaderSource", 
+    "glDeleteShader", 
+    "glGetProgramiv", 
+    "glAttachShader", 
+    "glProgramParameteri", 
+    "glLinkProgram", 
+    "glDeleteProgram", 
+    "glUseProgram", 
+    "glGetUniformLocation", 
+    "glGetUniformBlockIndex", 
+    "glGetProgramBinary", 
+    "glGenVertexArrays", 
+    "glBindVertexArray", 
+    "glEnableVertexAttribArray", 
+    "glGenBuffers", 
+    "glBindBuffer", 
+    "glBufferData", 
+    "glVertexAttribPointer", 
+    "glDeleteBuffers", 
+    "glDeleteVertexArrays", 
+    "glUniform1f", 
+    "glUniform3fv", 
+    "glUniform4fv", 
+    "glUniformMatrix4fv",
+    "glBindBufferBase",
+    "glDispatchCompute",
+    "glMemoryBarrier",
+    "glMultiDrawArrays",
+    "glDrawBuffers",
+    "glGenFramebuffers",
+    "glFramebufferTexture2D",
+    "glCheckFramebufferStatus",
+    "glBindFramebuffer",
+    "glDeleteFramebuffers",
+    "glGetQueryObjectiv",
+    "glGetQueryObjectui64v",
+    "glTexImage2DMultisample",
+    "glGenerateMipmap",
+    "glUniform1i",
+    "glGetAttribLocation",
+    "glBufferSubData",
+    "glUniform4iv"
+};
+
+void* gl_function_pointers[sizeof(gl_function_names)/sizeof(const char*)];
+
+/// Returns the number of functions that failed to load.
+static int load_gl_functions() {
+    int failed = 0;
+	for (int i = 0; i < sizeof(gl_function_names) / sizeof(const char*); i++) {
+		const char* name = gl_function_names[i];
+		void* ptr = GetAnyGLFuncAddress(name);
+		gl_function_pointers[i] = ptr;
+		if (ptr == NULL) {
+            OutputDebugStringA("Failed");
+			failed++;
+		}
+	}
+    
+    return failed;
+}
 
 static void GLClearError()
 {
@@ -368,7 +377,7 @@ static void HyFramebuffer_Destroy(HyFramebuffer* framebuffer)
 {
     GL_CALL(glDeleteFramebuffers(1, &framebuffer->rendererID));
     GL_CALL(glDeleteTextures(1,&framebuffer->colorAttachmentRendererID));
-    GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
+    //GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
 }
 
 static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height)
@@ -377,7 +386,7 @@ static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uin
     {
         HyFramebuffer_Destroy(framebuffer);
         GL_CALL(glDeleteTextures(1,&framebuffer->colorAttachmentRendererID));
-        GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
+        //GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
     }
     
     framebuffer->width = width;
@@ -393,10 +402,12 @@ static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uin
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
     GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->colorAttachmentRendererID, 0));
     
+#if 0    
     GL_CALL(glGenRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
     GL_CALL(glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthAttachmentRendererID));
     GL_CALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, framebuffer->width, framebuffer->height)); 
     GL_CALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depthAttachmentRendererID));
+#endif
     
     HY_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete.");
     
@@ -624,7 +635,7 @@ static void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
         GL_CALL(glGetProgramiv(shader, GL_LINK_STATUS, &success));
         if (!success)
         {
-            GL_CALL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
+            //GL_CALL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
             HY_ERROR("{}", infoLog);
         }
     }
@@ -647,7 +658,7 @@ static HyVertexBuffer HY_VertexBuffer_Create(float* vertices, uint32_t size)
     vertexBuffer.size = size;
     vertexBuffer.vertices = vertices;
     
-    GL_CALL(glCreateBuffers(1, &vertexBuffer.rendererID));
+    //GL_CALL(glCreateBuffers(1, &vertexBuffer.rendererID));
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.rendererID));
     GL_CALL(glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_DYNAMIC_DRAW));
     
@@ -699,7 +710,7 @@ static HyIndexBuffer HY_CreateIndexBuffer(uint32_t* indices, uint32_t count)
     indexBuffer.indices = indices;
     indexBuffer.count = count;
     
-    GL_CALL(glCreateBuffers(1, &indexBuffer.rendererID));
+    //GL_CALL(glCreateBuffers(1, &indexBuffer.rendererID));
     GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.rendererID));
     GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint32_t), indices, GL_STATIC_DRAW));
     
@@ -840,8 +851,8 @@ static HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFile
     // Delete the shaders as they're linked into our program now and no longer necessary
     // Delete alone won't delete a shader. You need to detach it first.
     // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDetachShader.xhtml
-    GL_CALL(glDetachShader(shader->id , vertexShaderID));
-    GL_CALL(glDetachShader(shader->id , fragmentShaderID));
+    //GL_CALL(glDetachShader(shader->id , vertexShaderID));
+    //GL_CALL(glDetachShader(shader->id , fragmentShaderID));
     GL_CALL(glDeleteShader(vertexShaderID));
     GL_CALL(glDeleteShader(fragmentShaderID));
     
@@ -896,14 +907,14 @@ static void HY_Shader_SetFloat4(HyShader* shader, const char* name, const HyVec4
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
-    GL_CALL(glUniform4f(loc, value.x, value.y, value.z, value.w));
+    //GL_CALL(glUniform4f(loc, value.x, value.y, value.z, value.w));
 }
 
 static void HY_Shader_SetFloat3(HyShader* shader, const char* name, const HyVec3* value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
-    GL_CALL(glUniform3f(loc, value->x, value->y, value->z));
+    //GL_CALL(glUniform3f(loc, value->x, value->y, value->z));
 }
 
 static void HY_Shader_SetFloat(HyShader* shader, const char* name, float value)
@@ -1161,7 +1172,7 @@ static void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
     {
         samplers[i] = i; // TODO(alex): zero?
     }
-    GL_CALL(glUniform1iv(loc, 32, samplers));
+    //GL_CALL(glUniform1iv(loc, 32, samplers));
 }
 
 static void HyRenderer2D_EndScene(HyRenderer2D* renderer)
@@ -1178,7 +1189,7 @@ static void HyRenderer2D_Flush(HyRenderer2D* renderer)
 {
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i)
     {
-        glBindTextureUnit(i, renderer->textureSlots[i]);
+        //glBindTextureUnit(i, renderer->textureSlots[i]);
     }
     
     GL_CALL(glBindVertexArray(renderer->vao));

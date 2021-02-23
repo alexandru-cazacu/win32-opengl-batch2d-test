@@ -25,7 +25,7 @@ set sharedCompilerFlags=^
     -D HY_SLOW ^
     resources.res
 
-set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:windows ^
+set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console ^
 					   -LIBPATH:%binIntDir% /STACK:0x100000,0x100000
 set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib
 
