@@ -1,23 +1,31 @@
 #include "win32_lean_and_mean.c"
+#include "win32_crt.c"
+
 #include <gl/gl.h>
 #include "gl/glext.h"
 #include "gl/wglext.h"
 #include "resources.h"
-#include "win32_crt.c"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
+
+#include "hy_log.c"
 #include "hyper_types.h"
-
-static int g_HyperEngineInitialized = true;
-static int g_HyperLastErrorCode = 0;
-static int g_HyperRendererInitialized = false;
-
 #include "hyper_window.c"
+#include "hy_renderer_2d.c"
+#include "hy_time.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
-void __stdcall WinMainCRTStartup()
+//void __stdcall WinMainCRTStartup()
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     HyWindow window = {0};
     HyCreateWindow(&window, "Hyped");
+    
+    HY_TRACE("Initializing...");
     
     if (!&window) {
         MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);

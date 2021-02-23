@@ -1,0 +1,56 @@
+
+#include "hyper1.h"
+
+// =================================================================
+// TODO
+// =================================================================
+internal void GameUpdateAndRender(GameMemory *memory, GameInput* input)
+{
+    
+    Assert(sizeof(GameState) <= memory->PermanentStorageSize);
+    
+    GameState* gameState = (GameState*)memory->PermanentStorage;
+    
+    
+    if (!memory->IsInitialized)
+    {
+        //char* fileName = "test.bmp";
+        char* fileName = __FILE__;
+        
+        DebugReadFileResult file = DEBUGPlatformReadEntireFile(fileName);
+        if (file.Data)
+        {
+            DEBUGPlatformWriteEntireFile("C:/dev/test.ass", file.Size, file.Data);
+            DEBUGPlatformFreeFileMemory(file.Data);
+        }
+        
+        gameState->ToneHz = 256;
+        
+        // TODO(alex): maybe move in platform layer
+        memory->IsInitialized = true;
+    }
+    
+    GameControllerInput *input0 = &input->Controllers[0];
+    
+    if (input0->IsAnalog)
+    {
+        gameState->XOffset += (int) (4.0f * input0->EndX);
+        gameState->ToneHz = 256 + (int)(128.0f * input0->EndY);
+    }
+    else
+    {
+        
+    }
+    
+    if (input0->Down.EndedDown)
+    {
+        gameState->YOffset += 1;
+    }
+    
+    
+#if 0
+    char buf[256];
+    sprintf_s(buf, 256, "X: %" PRId32 "Y: %" PRId32 "\n", input->MouseX, input->MouseY);
+    SetWindowTitle(buf);
+#endif
+}

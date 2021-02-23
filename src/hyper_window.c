@@ -194,11 +194,9 @@ internal void HyProcessPendingMessages(HyWindow* window)
 internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     // NOTE(alex): Only on windows. Probably we are still bootrsapping the OGL context so we skip message handling to avoid quitting the window prematurely (if for exemple we destroy the trampoline context).
-#if 0
-    if (!g_HyperRendererInitialized) {
+    if (g_HyperRendererBootstrapping) {
         return DefWindowProcA(hwnd, msg, wParam, lParam);;
     }
-#endif
     
     if (msg == WM_NCCREATE)
     {
@@ -277,7 +275,7 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 internal void HySwapBuffers(HyWindow* window)
 {
-    //SwapBuffers(window->DeviceContext);
+    SwapBuffers(window->DeviceContext);
 }
 
 /// @brief Creates a new Window with a modern OpenGL context.
@@ -295,14 +293,16 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     window_class.hInstance = hInstance;
     window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
     window_class.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(101));
-    window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    //window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    window_class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     window_class.lpszClassName = "HyperWindowClass";
     
     RegisterClassA(&window_class);
     
     // NOTE(alex): It's dangerous to go alone. Take this: https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
     
-#if 0    
+    g_HyperRendererBootstrapping = true;
+    
     HWND fakeWND = CreateWindow("HyperWindowClass", // window class
                                 "Fake Window",      // title
                                 (DWORD)StyleAeroBorderless, // style
@@ -359,7 +359,8 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
         MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
         return HY_PLATFORM_ERROR;
     }
-#endif
+    
+    g_HyperRendererBootstrapping = false;
     
     HWND WND = CreateWindowA(window_class.lpszClassName, title, // class name, window name
                              (DWORD)StyleAeroBorderless, // style
@@ -371,7 +372,8 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     
     HDC DC = GetDC(WND);
     
-#if 0
+    g_HyperRendererBootstrapping = true;
+    
     const int pixelAttribs[] = {
         WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
         WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
@@ -413,6 +415,8 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
         return HY_PLATFORM_ERROR;
     }
     
+    g_HyperRendererBootstrapping = false;
+    
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(fakeRC);
     ReleaseDC(fakeWND, fakeDC);
@@ -421,12 +425,11 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
         MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
         return HY_PLATFORM_ERROR;
     }
-#endif
     
-    g_HyperRendererInitialized = true;
+    g_HyperRendererBootstrapping = false;
     
     hyWindow->WindowHandle = WND;
-    //hyWindow->DeviceContext = DC;
+    hyWindow->DeviceContext = DC;
     
     hyWindow->borderless = true;
     hyWindow->borderless_resize = true;
@@ -435,7 +438,7 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     
     Win32SetBorderless(hyWindow, true);
     Win32SetBorderlessShadow(hyWindow, true);
-    //SetWindowTextA(WND, (LPCSTR)glGetString(GL_VERSION));
+    SetWindowTextA(WND, (LPCSTR)glGetString(GL_VERSION));
     ShowWindow(hyWindow->WindowHandle, SW_SHOW);
     
     return HY_NO_ERROR;

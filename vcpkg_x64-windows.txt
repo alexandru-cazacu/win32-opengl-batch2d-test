@@ -1,0 +1,9 @@
+catch2
+sdl2[core]
+glm
+stb
+glad
+assimp
+spdlog
+--triplet
+x64-windows

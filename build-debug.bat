@@ -26,7 +26,7 @@ set sharedCompilerFlags=^
     resources.res
 
 set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:windows ^
-					   -LIBPATH:%binIntDir% -NODEFAULTLIB /STACK:0x100000,0x100000
+					   -LIBPATH:%binIntDir% /STACK:0x100000,0x100000
 set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib
 
 call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
