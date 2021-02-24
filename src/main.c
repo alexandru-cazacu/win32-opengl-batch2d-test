@@ -1,16 +1,14 @@
-#include "win32_lean_and_mean.c"
-#include "win32_crt.c"
-
+#include "win32.c"
 #include <gl/gl.h>
-#include "gl/glext.h"
-#include "gl/wglext.h"
-#include "resources.h"
+#include <gl/glext.h>
+#include <gl/wglext.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
+#include "resources.h"
 #include "hy_types.c"
 #include "hy_log.c"
 #include "hy_window.c"
@@ -45,7 +43,7 @@ int main()
         ExitProcess(0);
     }
     
-    load_gl_functions();
+    HY_LoadGlFunctions();
     
     // build and compile our shader program
     // ------------------------------------

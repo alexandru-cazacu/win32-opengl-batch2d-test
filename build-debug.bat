@@ -13,7 +13,7 @@ if not exist %binIntDir%\resources.res (
 )
 
 set sharedCompilerFlags=^
-    -Oi -MDd -Zi -GR- -EHa- -FC -nologo -std:c++17 /GS- /Gs9999999 ^
+    -Oi -MTd -Zi -GR- -EHa- -FC -nologo -std:c++17 ^
     -W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 ^
     -Fe:%binDir%\%prjName% ^
     -Fo:%binIntDir%\%prjName% ^
@@ -26,8 +26,7 @@ set sharedCompilerFlags=^
     -D HY_ENABLE_LOG ^
     resources.res
 
-set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console ^
-					   -LIBPATH:%binIntDir% /STACK:0x100000,0x100000
+set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console -LIBPATH:%binIntDir%
 set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib
 
 call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime

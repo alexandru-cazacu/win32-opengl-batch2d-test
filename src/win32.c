@@ -3,7 +3,19 @@
 
 // Disables unused Windows functions and makes build times faster.
 // Commented out the functions we actually need.
+
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef WIN32_EXTRA_LEAN
+#define WIN32_EXTRA_LEAN // TODO(alex): Check if it really does something in Windows.h
+#endif
+
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN // Only for MFC, but who knows.
+#endif
+
 #define NOGDICAPMASKS
 //#define NOSYSMETRICS
 #define NOMENUS

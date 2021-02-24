@@ -142,7 +142,7 @@ const char* gl_function_names[] = {
 void* gl_function_pointers[sizeof(gl_function_names)/sizeof(const char*)];
 
 /// Returns the number of functions that failed to load.
-static int load_gl_functions() {
+static int HY_LoadGlFunctions() {
     int failed = 0;
 	for (int i = 0; i < sizeof(gl_function_names) / sizeof(const char*); i++) {
 		const char* name = gl_function_names[i];
