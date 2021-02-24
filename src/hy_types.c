@@ -39,17 +39,9 @@ typedef int b32;
 #define HY_MOUSE_BUTTON_RIGHT   HY_MOUSE_BUTTON_2
 #define HY_MOUSE_BUTTON_MIDDLE   HY_MOUSE_BUTTON_3
 
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
 #if HY_SLOW
-#define HY_ENABLE_LOG
-#define HY_ASSERT(x, s) if (!(x)) { if (IsDebuggerPresent()) __debugbreak(); else HY_ERROR("Assertion failed but no debugger is attached." s); }
+#define HY_FASSERT(x) if (!(x)) { *(int*)0 = 0; }
+#define HY_ASSERT(x, __VA_ARGS__) if (!(x)) { if (IsDebuggerPresent()) __debugbreak(); else { HY_ERROR("Assertion failed but no debugger is attached." __VA_ARGS__); *(int*)0 = 0; } }
 #else // HY_SLOW
 #define HY_ASSERT(x)
 #endif // HY_SLOW
@@ -63,7 +55,7 @@ typedef int b32;
 
 inline u32 SafeTruncateU64(u64 value)
 {
-    HY_ASSERT(value < 0xffffffff, "Assertion failed.");
+    HY_FASSERT(value < 0xffffffff);
     u32 result = (u32)value;
     return result;
 }
@@ -72,98 +64,6 @@ inline u32 SafeTruncateU64(u64 value)
 #define HY_NOT_INITIALIZED   0x00010001
 #define HY_PLATFORM_ERROR   0x00010008
 
-typedef struct
-{
-    void* Data;
-    u32 Size;
-} DebugReadFileResult;
-
 static int g_HyperEngineInitialized = true;
 static int g_HyperLastErrorCode = 0;
 static int g_HyperRendererBootstrapping = false;
-
-DebugReadFileResult DEBUGPlatformReadEntireFile(const char* fileName);
-void DEBUGPlatformFreeFileMemory(void* memory);
-b32 DEBUGPlatformWriteEntireFile(char* fileName, u32 memorySize, void* memory);
-
-DebugReadFileResult DEBUGPlatformReadEntireFile(const char* fileName)
-{
-    DebugReadFileResult result = {0};
-    
-    HANDLE fileHandle = CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (fileHandle != INVALID_HANDLE_VALUE)
-    {
-        LARGE_INTEGER fileSize;
-        if (GetFileSizeEx(fileHandle, &fileSize))
-        {
-            u32 fileSize32 = SafeTruncateU64(fileSize.QuadPart);
-            result.Data = VirtualAlloc(0, fileSize32, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-            if (result.Data)
-            {
-                DWORD bytesRead;
-                // NOTE(alex): the reason for the second check is because someone may truncate the file in between our GetFileSize() and ReadFile(). That would result.Data in a file size greater than the bytes read.
-                if (ReadFile(fileHandle, result.Data, fileSize32, &bytesRead, 0) && (fileSize32 == bytesRead))
-                {
-                    result.Size = fileSize32;
-                }
-                else
-                {
-                    // TODO(alex): logging
-                    DEBUGPlatformFreeFileMemory(result.Data);
-                    result.Data = 0;
-                }
-            }
-            else
-            {
-                // TODO(alex): logging
-            }
-        }
-        else
-        {
-            // TODO(alex): logging
-        }
-        
-        CloseHandle(fileHandle);
-    }
-    else
-    {
-        // TODO(alex): logging
-    }
-    
-    return result;
-}
-
-void DEBUGPlatformFreeFileMemory(void* memory)
-{
-    if (memory)
-    {
-        VirtualFree(memory, 0, MEM_RELEASE);
-    }
-}
-
-b32 DEBUGPlatformWriteEntireFile(char* fileName, u32 memorySize, void* memory)
-{
-    b32 result = false;
-    
-    HANDLE fileHandle = CreateFileA(fileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
-    if (fileHandle != INVALID_HANDLE_VALUE)
-    {
-        DWORD bytesWritten;
-        if (WriteFile(fileHandle, memory, memorySize, &bytesWritten, 0))
-        {
-            result = (memorySize == bytesWritten);
-        }
-        else
-        {
-            // TODO(alex): logging
-        }
-        
-        CloseHandle(fileHandle);
-    }
-    else
-    {
-        // TODO(alex): logging
-    }
-    
-    return result;
-}

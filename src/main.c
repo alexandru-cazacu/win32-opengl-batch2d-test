@@ -11,9 +11,10 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
-#include "hy_log.c"
 #include "hy_types.c"
+#include "hy_log.c"
 #include "hy_window.c"
+#include "hy_file.c"
 #include "hy_renderer_2d.c"
 #include "hy_time.c"
 
@@ -34,11 +35,10 @@ const char *fragmentShaderSource = "#version 330 core\n"
 
 int main()
 {
+    HY_LogInit(false);
+    
     HyWindow window = {0};
     HyCreateWindow(&window, "Hyped");
-    
-    HY_TRACE("Initializing...");
-    HY_ERROR("Ciao");
     
     if (!&window) {
         MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);
@@ -115,12 +115,6 @@ int main()
     glBindVertexArray(0); 
     
     glViewport(0, 0, 1920, 1080);
-    
-    if (IsDebuggerPresent()) {
-        OutputDebugStringA("Debugger present");
-    } else {
-        printf(ANSI_COLOR_RED "Debugger not found. Fallback on stdio.\n" ANSI_COLOR_RESET);
-    }
     
     while (!HyWindowShouldClose(&window)) {
         HyProcessPendingMessages(&window);

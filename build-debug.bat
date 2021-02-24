@@ -23,6 +23,7 @@ set sharedCompilerFlags=^
     -I %cd%\deps ^
     -I %cd%\resources ^
     -D HY_SLOW ^
+    -D HY_ENABLE_LOG ^
     resources.res
 
 set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console ^

@@ -632,7 +632,7 @@ static void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
         if (!success)
         {
             GL_CALL(glGetShaderInfoLog(shader, 1024, NULL, infoLog));
-            HY_ERROR("{}", infoLog);
+            //HY_ERROR("{}", infoLog);
         }
     }
     else
@@ -641,7 +641,7 @@ static void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
         if (!success)
         {
             //GL_CALL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
-            HY_ERROR("{}", infoLog);
+            //HY_ERROR("{}", infoLog);
         }
     }
 }
