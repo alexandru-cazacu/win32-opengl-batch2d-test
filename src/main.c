@@ -12,8 +12,8 @@
 #include <stb_image_resize.h>
 
 #include "hy_log.c"
-#include "hyper_types.h"
-#include "hyper_window.c"
+#include "hy_types.c"
+#include "hy_window.c"
 #include "hy_renderer_2d.c"
 #include "hy_time.c"
 
@@ -38,6 +38,7 @@ int main()
     HyCreateWindow(&window, "Hyped");
     
     HY_TRACE("Initializing...");
+    HY_ERROR("Ciao");
     
     if (!&window) {
         MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);

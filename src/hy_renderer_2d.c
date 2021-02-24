@@ -1,3 +1,6 @@
+
+//~ OpenGL Hacky loader.
+
 #define glActiveTexture ((PFNGLACTIVETEXTUREPROC)gl_function_pointers[0]) 
 #define glDebugMessageCallbackAMD ((PFNGLDEBUGMESSAGECALLBACKAMDPROC)gl_function_pointers[1]) 
 #define glDebugMessageEnableAMD ((PFNGLDEBUGMESSAGEENABLEAMDPROC)gl_function_pointers[2]) 
@@ -154,6 +157,8 @@ static int load_gl_functions() {
     return failed;
 }
 
+//~ OpenGL Error handling
+
 static void GLClearError()
 {
     while(glGetError() != GL_NO_ERROR);
@@ -175,8 +180,8 @@ static int GLLogCall(const char* function, const char* file, int line)
         }
         char msg[256];
         // TODO(alex): Fix, make a usable logging function.
-        //OutputDebugStringA(msg, 256, "[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
-        OutputDebugStringA(msg);
+        snprintf(msg, 256, "[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
+        HY_ERROR(msg);
         return false;
     }
     return true;
