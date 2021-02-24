@@ -16,6 +16,10 @@
 #include "hy_renderer_2d.c"
 #include "hy_time.c"
 
+#pragma warning(disable:4996)
+#include "ini.h"
+#include "ini.c"
+
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
 const char *vertexShaderSource = "#version 330 core\n"
@@ -31,9 +35,74 @@ const char *fragmentShaderSource = "#version 330 core\n"
 "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 "}\n\0";
 
+typedef enum HyWindowStartMode
+{
+    HyWindowStartMode_Auto,
+    HyWindowStartMode_Maximized,
+    HyWindowStartMode_Fullscreen
+} HyWindowStartMode;
+
+typedef struct
+{
+    HyWindowStartMode startMode;
+    const char* user;
+} HyConfig;
+
+static int configHandler(void* user, const char* section, const char* name, const char* value)
+{
+    HyConfig* config = (HyConfig*)user;
+    
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+    if (MATCH("window", "startMode")) {
+        //config->startMode = strdup(value);
+        if (strcmp(value, "auto") == 0) {
+            config->startMode = HyWindowStartMode_Auto;
+        } else if (strcmp(value, "maximized") == 0) {
+            config->startMode = HyWindowStartMode_Maximized;
+        } else if (strcmp(value, "fullscreen") == 0) {
+            config->startMode = HyWindowStartMode_Fullscreen;
+        }
+    } else if (MATCH("misc", "user")) {
+        config->user = strdup(value);
+    } else {
+        return 0;  /* unknown section/name, error */
+    }
+    return 1;
+}
+
 int main()
 {
     HY_LogInit(false);
+    
+    HyConfig config = {0};
+    config.startMode = HyWindowStartMode_Auto;
+    
+    FILE* configFile;
+    fopen_s(&configFile, ".hypedrc", "r");
+    
+    if (configFile) {
+        fseek(configFile, 0, SEEK_END);
+        size_t fileSize = ftell(configFile);
+        char* buffer = (char*)malloc(fileSize + 1);
+        
+        if (buffer) {
+            fseek(configFile, 0, SEEK_SET);
+            fread(buffer, fileSize, 1, configFile);
+            buffer[fileSize] = 0;
+            
+            ini_parse_string(buffer, configHandler, &config);
+            fprintf(stdout,
+                    "Config loaded from '.hypedrc': \n - startMode=%d\n - user=%s\n",
+                    config.startMode,
+                    config.user);
+            
+        } else {
+            // TODO(alex): Logging
+        }
+        fclose(configFile);
+    } else {
+        HY_INFO(".hypedrc not found");
+    }
     
     HyWindow window = {0};
     HyCreateWindow(&window, "Hyped");
@@ -135,7 +204,6 @@ int main()
     ExitProcess(0);
 }
 
-//void __stdcall WinMainCRTStartup()
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     return main();

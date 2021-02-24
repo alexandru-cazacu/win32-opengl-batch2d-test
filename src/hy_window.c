@@ -365,7 +365,7 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     HWND WND = CreateWindowA(window_class.lpszClassName, title, // class name, window name
                              (DWORD)StyleAeroBorderless, // style
                              CW_USEDEFAULT, CW_USEDEFAULT, // x, y
-                             CW_USEDEFAULT, CW_USEDEFAULT, // width, height
+                             1280, 720, // width, height
                              0, 0, hInstance, hyWindow); // parent window, menu, instance. param
     
     hyWindow->WindowHandle = WND;

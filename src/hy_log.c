@@ -44,7 +44,6 @@ static void HY_LogInit(BOOL useColors)
 
 static void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)
 {
-#if 0
     const char* usedColor = g_LogEnableColors ? color : "";
     const char* usedResetColor = g_LogEnableColors ? ANSI_COLOR_RESET : "";
     SYSTEMTIME localTime = {0};
@@ -67,7 +66,6 @@ static void HY_Log(const char* msg, const char* file, int line, const char* colo
                  msg);
         printf(fmtMsg);
     }
-#endif
 }
 
 #else // HY_ENABLE_LOG
