@@ -1,22 +1,21 @@
-static double g_TimerStart;
-static double g_TimerFrequency = 0.0f;
+global_variable double g_TimerStart;
+global_variable double g_TimerFrequency = 0.0f;
 
-static void HY_Timer_Init()
+internal void HY_Timer_Init()
 {
-	if (g_TimerFrequency == 0.0f)
-	{
+	if (g_TimerFrequency == 0.0f) {
 		QueryPerformanceFrequency((LARGE_INTEGER*)&g_TimerFrequency);
 	}
     
     QueryPerformanceCounter((LARGE_INTEGER*)&g_TimerStart);
 }
 
-static void HY_Timer_Reset()
+internal void HY_Timer_Reset()
 {
     QueryPerformanceCounter((LARGE_INTEGER*)&g_TimerStart);
 }
 
-static float HY_Timer_GetMilliseconds()
+internal float HY_Timer_GetMilliseconds()
 {
     double counter;
     QueryPerformanceCounter((LARGE_INTEGER*)&counter);

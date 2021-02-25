@@ -25,9 +25,9 @@ typedef int b32;
 
 #define Pi32 3.14159265359f
 
-#define internal static
-#define local_persist static
-#define global_variable static
+#define internal static        /// Unity Build. For static functions.
+#define local_persist static   /// For static variables inside functions.
+#define global_variable static /// Unity Build. For static variables inside files.
 
 #define HY_MOUSE_BUTTON_1   0
 #define HY_MOUSE_BUTTON_2   1
@@ -64,6 +64,6 @@ inline u32 SafeTruncateU64(u64 value)
 #define HY_NOT_INITIALIZED   0x00010001
 #define HY_PLATFORM_ERROR   0x00010008
 
-static int g_HyperEngineInitialized = true;
-static int g_HyperLastErrorCode = 0;
-static int g_HyperRendererBootstrapping = false;
+global_variable int g_HyperEngineInitialized = true;
+global_variable int g_HyperLastErrorCode = 0;
+global_variable int g_HyperRendererBootstrapping = false;

@@ -63,7 +63,7 @@
 
 // https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 // https://gist.github.com/seece/9f5f3069130c4fe642f4fd5e7375816a
-static void *GetAnyGLFuncAddress(const char *name)
+internal void *GetAnyGLFuncAddress(const char *name)
 {
     void *p = (void *)wglGetProcAddress(name);
     if (p == 0 ||
@@ -142,7 +142,7 @@ const char* gl_function_names[] = {
 void* gl_function_pointers[sizeof(gl_function_names)/sizeof(const char*)];
 
 /// Returns the number of functions that failed to load.
-static int HY_LoadGlFunctions() {
+internal int HY_LoadGlFunctions() {
     int failed = 0;
 	for (int i = 0; i < sizeof(gl_function_names) / sizeof(const char*); i++) {
 		const char* name = gl_function_names[i];
@@ -159,12 +159,12 @@ static int HY_LoadGlFunctions() {
 
 //~ OpenGL Error handling
 
-static void GLClearError()
+internal void GLClearError()
 {
     while(glGetError() != GL_NO_ERROR);
 }
 
-static int GLLogCall(const char* function, const char* file, int line)
+internal int GLLogCall(const char* function, const char* file, int line)
 {
     GLenum errorCode = glGetError();
     while(errorCode) {
@@ -190,7 +190,7 @@ static int GLLogCall(const char* function, const char* file, int line)
 #define ASSERT(x) if (!(x)) { printf("Assert!\n"); __debugbreak(); }
 #define GL_CALL(x) GLClearError(); x; ASSERT(GLLogCall(#x, __FILE__, __LINE__))
 
-static void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
+internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
 {
     // ignore non-significant error/warning codes
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
@@ -245,17 +245,17 @@ static void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, 
 
 //~ Colors
 
-static float HyColor_White[] =       { 1.0f, 1.0f, 1.0f, 1.0f };
-static float HyColor_Grey2[] =       { 0.2f, 0.2f, 0.2f, 1.0f };
-static float HyColor_Grey1[] =       { 0.1f, 0.1f, 0.1f, 1.0f };
-static float HyColor_Grey05[] =      { 0.05f, 0.05f, 0.05f, 1.0f };
-static float HyColor_Grey[] =        { 0.1f, 0.1f, 0.1f, 1.0f };
-static float HyColor_Black[] =       { 0.0f, 0.0f, 0.0f, 1.0f };
-static float HyColor_Red[] =         { 1.0f, 0.0f, 0.0f, 1.0f };
-static float HyColor_Green[] =       { 0.0f, 1.0f, 0.0f, 1.0f };
-static float HyColor_Blue[] =        { 0.0f, 0.0f, 1.0f, 1.0f };
-static float HyColor_Magenta[] =     { 1.0f, 0.0f, 1.0f, 1.0f };
-static float HyColor_Transparent[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+internal float HyColor_White[] =       { 1.0f, 1.0f, 1.0f, 1.0f };
+internal float HyColor_Grey2[] =       { 0.2f, 0.2f, 0.2f, 1.0f };
+internal float HyColor_Grey1[] =       { 0.1f, 0.1f, 0.1f, 1.0f };
+internal float HyColor_Grey05[] =      { 0.05f, 0.05f, 0.05f, 1.0f };
+internal float HyColor_Grey[] =        { 0.1f, 0.1f, 0.1f, 1.0f };
+internal float HyColor_Black[] =       { 0.0f, 0.0f, 0.0f, 1.0f };
+internal float HyColor_Red[] =         { 1.0f, 0.0f, 0.0f, 1.0f };
+internal float HyColor_Green[] =       { 0.0f, 1.0f, 0.0f, 1.0f };
+internal float HyColor_Blue[] =        { 0.0f, 0.0f, 1.0f, 1.0f };
+internal float HyColor_Magenta[] =     { 1.0f, 0.0f, 1.0f, 1.0f };
+internal float HyColor_Transparent[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 //~ Textures
 
@@ -274,7 +274,7 @@ typedef enum HyTextureFilterMode
     Nearest
 } HyTextureFilterMode;
 
-static int HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilterMode filter)
+internal int HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilterMode filter)
 {
     // TODO(alex): Make Linear the default filter mode?
     
@@ -345,7 +345,7 @@ static int HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilte
     // TODO(alex): Delete texture when?
 }
 
-static void HyTexture_Bind(HyTexture* texture, uint32_t location)
+internal void HyTexture_Bind(HyTexture* texture, uint32_t location)
 {
     GL_CALL(glActiveTexture(GL_TEXTURE0 + location));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->rendererID));
@@ -363,13 +363,13 @@ typedef struct
     uint32_t height;
 } HyFramebuffer;
 
-static HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height);
-static void HyFramebuffer_Destroy(HyFramebuffer* framebuffer);
-static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height);
-static void HyFramebuffer_Bind(HyFramebuffer* framebuffer);
-static void HyFramebuffer_Unbind();
+internal HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height);
+internal void HyFramebuffer_Destroy(HyFramebuffer* framebuffer);
+internal void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height);
+internal void HyFramebuffer_Bind(HyFramebuffer* framebuffer);
+internal void HyFramebuffer_Unbind();
 
-static HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height)
+internal HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height)
 {
     HyFramebuffer framebuffer = {0};
     
@@ -378,14 +378,14 @@ static HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height)
     return framebuffer;
 }
 
-static void HyFramebuffer_Destroy(HyFramebuffer* framebuffer)
+internal void HyFramebuffer_Destroy(HyFramebuffer* framebuffer)
 {
     GL_CALL(glDeleteFramebuffers(1, &framebuffer->rendererID));
     GL_CALL(glDeleteTextures(1,&framebuffer->colorAttachmentRendererID));
     //GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
 }
 
-static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height)
+internal void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height)
 {
     if (framebuffer->width != width && framebuffer->height != height && framebuffer->rendererID)
     {
@@ -419,13 +419,13 @@ static void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uin
     HyFramebuffer_Unbind();
 }
 
-static void HyFramebuffer_Bind(HyFramebuffer* framebuffer)
+internal void HyFramebuffer_Bind(HyFramebuffer* framebuffer)
 {
     GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->rendererID));
     GL_CALL(glViewport(0, 0, framebuffer->width, framebuffer->height));
 }
 
-static void HyFramebuffer_Unbind()
+internal void HyFramebuffer_Unbind()
 {
     GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
@@ -526,7 +526,7 @@ typedef struct
 } HyBufferLayout;
 
 // Returns the size in bytes.
-static uint32_t HY_ShaderDataType_GetSize(HyShaderDataType type)
+internal uint32_t HY_ShaderDataType_GetSize(HyShaderDataType type)
 {
     switch (type)
     {
@@ -547,7 +547,7 @@ static uint32_t HY_ShaderDataType_GetSize(HyShaderDataType type)
     return 0;
 }
 
-static uint32_t HY_ShaderDataType_GetComponentCount(HyShaderDataType type)
+internal uint32_t HY_ShaderDataType_GetComponentCount(HyShaderDataType type)
 {
     switch (type)
     {
@@ -568,7 +568,7 @@ static uint32_t HY_ShaderDataType_GetComponentCount(HyShaderDataType type)
     return 0;
 }
 
-static GLenum HY_ShaderDataTypeToOpenGLBaseType(HyShaderDataType type)
+internal GLenum HY_ShaderDataTypeToOpenGLBaseType(HyShaderDataType type)
 {
     switch (type)
     {
@@ -589,7 +589,7 @@ static GLenum HY_ShaderDataTypeToOpenGLBaseType(HyShaderDataType type)
     return 0;
 }
 
-static void HY_BufferLayout_CalculateOffsetAndStride(HyBufferLayout* layout)
+internal void HY_BufferLayout_CalculateOffsetAndStride(HyBufferLayout* layout)
 {
     uint32_t offset = 0;
     layout->stride = 0;
@@ -601,14 +601,14 @@ static void HY_BufferLayout_CalculateOffsetAndStride(HyBufferLayout* layout)
     }
 }
 
-static void HY_BufferLayout_PushElement(HyBufferLayout* layout, HyBufferElement element)
+internal void HY_BufferLayout_PushElement(HyBufferLayout* layout, HyBufferElement element)
 {
     layout->elements[layout->elementsIndex++] = element;
     
     HY_BufferLayout_CalculateOffsetAndStride(layout);
 }
 
-static HyBufferElement HY_BufferElement_Create(HyShaderDataType dataType, const char* name, BOOL normalized)
+internal HyBufferElement HY_BufferElement_Create(HyShaderDataType dataType, const char* name, BOOL normalized)
 {
     // TODO(alex): Make normalized default to false;
     normalized = false;
@@ -622,7 +622,7 @@ static HyBufferElement HY_BufferElement_Create(HyShaderDataType dataType, const 
     return bufferElement;
 }
 
-static void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
+internal void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
 {
     int success;
     char infoLog[1024];
@@ -657,7 +657,7 @@ typedef struct
 } HyVertexBuffer;
 
 // TODO(alex): Remove vertex buffer abstraction?
-static HyVertexBuffer HY_VertexBuffer_Create(float* vertices, uint32_t size)
+internal HyVertexBuffer HY_VertexBuffer_Create(float* vertices, uint32_t size)
 {
     HyVertexBuffer vertexBuffer = {0};
     vertexBuffer.size = size;
@@ -670,17 +670,17 @@ static HyVertexBuffer HY_VertexBuffer_Create(float* vertices, uint32_t size)
     return vertexBuffer;
 }
 
-static void HY_DestroyVertexBuffer(HyVertexBuffer* vertexBuffer)
+internal void HY_DestroyVertexBuffer(HyVertexBuffer* vertexBuffer)
 {
     GL_CALL(glDeleteBuffers(1, &vertexBuffer->rendererID));
 }
 
-static void HY_SetVertexBufferLayout(HyVertexBuffer* vertexBuffer, HyBufferLayout* layout)
+internal void HY_SetVertexBufferLayout(HyVertexBuffer* vertexBuffer, HyBufferLayout* layout)
 {
     vertexBuffer->layout = *layout;
 }
 
-static void HY_SetVertexBufferData(HyVertexBuffer* vertexBuffer, void* data, uint32_t size)
+internal void HY_SetVertexBufferData(HyVertexBuffer* vertexBuffer, void* data, uint32_t size)
 {
     vertexBuffer->vertices = data;
     vertexBuffer->size = size;
@@ -689,12 +689,12 @@ static void HY_SetVertexBufferData(HyVertexBuffer* vertexBuffer, void* data, uin
     GL_CALL(glBufferSubData(GL_ARRAY_BUFFER, 0, vertexBuffer->size, vertexBuffer->vertices));
 }
 
-static void HY_BindVertexBuffer(HyVertexBuffer* vertexBuffer)
+internal void HY_BindVertexBuffer(HyVertexBuffer* vertexBuffer)
 {
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->rendererID));
 }
 
-static void HY_UnbindVertexBuffer()
+internal void HY_UnbindVertexBuffer()
 {
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }
@@ -708,7 +708,7 @@ typedef struct
     uint32_t count;
 } HyIndexBuffer;
 
-static HyIndexBuffer HY_CreateIndexBuffer(uint32_t* indices, uint32_t count)
+internal HyIndexBuffer HY_CreateIndexBuffer(uint32_t* indices, uint32_t count)
 {
     HyIndexBuffer indexBuffer = {0};
     
@@ -722,17 +722,17 @@ static HyIndexBuffer HY_CreateIndexBuffer(uint32_t* indices, uint32_t count)
     return indexBuffer;
 }
 
-static void HY_DestroyIndexBuffer(HyIndexBuffer* indexBuffer)
+internal void HY_DestroyIndexBuffer(HyIndexBuffer* indexBuffer)
 {
     GL_CALL(glDeleteBuffers(1, &indexBuffer->rendererID));
 }
 
-static void HY_BindIndexBuffer(HyIndexBuffer* indexBuffer)
+internal void HY_BindIndexBuffer(HyIndexBuffer* indexBuffer)
 {
     GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->rendererID));
 }
 
-static void HY_UnbindIndexBuffer()
+internal void HY_UnbindIndexBuffer()
 {
     GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
@@ -747,7 +747,7 @@ typedef struct
     uint32_t vertexBufferCount;
 } HyVertexArray;
 
-static HyVertexArray HY_VertexArray_Create()
+internal HyVertexArray HY_VertexArray_Create()
 {
     HyVertexArray vertexArray = {0};
     
@@ -756,12 +756,12 @@ static HyVertexArray HY_VertexArray_Create()
     return vertexArray;
 }
 
-static void HY_VertexArray_Destroy(HyVertexArray* vertexArray)
+internal void HY_VertexArray_Destroy(HyVertexArray* vertexArray)
 {
     // TODO(alex): Implement
 }
 
-static void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVertexBuffer* vertexBuffer)
+internal void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVertexBuffer* vertexBuffer)
 {
     HY_ASSERT(vertexBuffer->layout.elementsIndex, "Vertex Buffer has no layout!");
     
@@ -787,7 +787,7 @@ static void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVertexB
     vertexArray->vertexBuffers[vertexArray->vertexBufferCount++] = vertexBuffer;
 }
 
-static void HY_VertexArray_SetIndexBuffer(HyVertexArray* vertexArray, HyIndexBuffer* indexBuffer)
+internal void HY_VertexArray_SetIndexBuffer(HyVertexArray* vertexArray, HyIndexBuffer* indexBuffer)
 {
     GL_CALL(glBindVertexArray(vertexArray->rendererID));
     HY_BindIndexBuffer(indexBuffer);
@@ -795,12 +795,12 @@ static void HY_VertexArray_SetIndexBuffer(HyVertexArray* vertexArray, HyIndexBuf
     vertexArray->indexBuffer = indexBuffer;
 }
 
-static void HY_VertexArray_Bind(HyVertexArray* vertexArray)
+internal void HY_VertexArray_Bind(HyVertexArray* vertexArray)
 {
     GL_CALL(glBindVertexArray(vertexArray->rendererID));
 }
 
-static void HY_VertexArray_Unbind()
+internal void HY_VertexArray_Unbind()
 {
     GL_CALL(glBindVertexArray(0));
 }
@@ -823,7 +823,7 @@ typedef struct
     // TODO(alex): Implement
 } HyShaderLibrary;
 
-static HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFilePath)
+internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFilePath)
 {
     DebugReadFileResult vShaderCode = DEBUGPlatformReadEntireFile(vertFilePath);
     DebugReadFileResult fShaderCode = DEBUGPlatformReadEntireFile(fragFilePath);
@@ -872,7 +872,7 @@ static HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFile
 }
 
 // Returns location if found, -1 otherwise.
-static int HY_Shader_GetUniformLocation(HyShader* shader, const char* name)
+internal int HY_Shader_GetUniformLocation(HyShader* shader, const char* name)
 {
     // TODO(alex): Reimplement uniform hash table with collision check and correct size.
     
@@ -891,45 +891,45 @@ static int HY_Shader_GetUniformLocation(HyShader* shader, const char* name)
     return glGetUniformLocation(shader->id, name);
 }
 
-static void HY_Shader_Delete(HyShader* shader)
+internal void HY_Shader_Delete(HyShader* shader)
 {
     GL_CALL(glDeleteProgram(shader->id));
 }
 
-static void HY_Shader_Bind(HyShader* shader)
+internal void HY_Shader_Bind(HyShader* shader)
 {
     GL_CALL(glUseProgram(shader->id));
 }
 
-static void HY_Shader_SetInt(HyShader* shader, const char* name, int value)
+internal void HY_Shader_SetInt(HyShader* shader, const char* name, int value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
     GL_CALL(glUniform1i(loc, value));
 }
 
-static void HY_Shader_SetFloat4(HyShader* shader, const char* name, const HyVec4 value)
+internal void HY_Shader_SetFloat4(HyShader* shader, const char* name, const HyVec4 value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
     //GL_CALL(glUniform4f(loc, value.x, value.y, value.z, value.w));
 }
 
-static void HY_Shader_SetFloat3(HyShader* shader, const char* name, const HyVec3* value)
+internal void HY_Shader_SetFloat3(HyShader* shader, const char* name, const HyVec3* value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
     //GL_CALL(glUniform3f(loc, value->x, value->y, value->z));
 }
 
-static void HY_Shader_SetFloat(HyShader* shader, const char* name, float value)
+internal void HY_Shader_SetFloat(HyShader* shader, const char* name, float value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
     GL_CALL(glUniform1f(loc, value));
 }
 
-static void HY_Shader_SetMat4(HyShader* shader, const char* name, const HyMat4* value)
+internal void HY_Shader_SetMat4(HyShader* shader, const char* name, const HyMat4* value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
@@ -940,7 +940,7 @@ static void HY_Shader_SetMat4(HyShader* shader, const char* name, const HyMat4* 
 }
 
 #if 0
-static void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
+internal void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
 {
     // Calculate the new Front vector
     glm::vec3 direction;
@@ -976,9 +976,9 @@ typedef struct
     HyVec4 viewport;
 } HyCamera2D;
 
-static void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane);
+internal void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane);
 
-static HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane, float farPlane)
+internal HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane, float farPlane)
 {
     HyCamera2D camera = {0};
     
@@ -987,7 +987,7 @@ static HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane, 
     return camera;
 }
 
-static void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane)
+internal void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane)
 {
     camera->width = width;
     camera->height = height;
@@ -1046,31 +1046,31 @@ typedef struct
     HyRenderer2DStats stats;
 } HyRenderer2D;
 
-static void HyRenderer2D_Init(HyRenderer2D* renderer);
-static void HyRenderer2D_Shutdown(HyRenderer2D* renderer);
-//static void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera);
-static void HyRenderer2D_EndScene(HyRenderer2D* renderer);
-static void HyRenderer2D_Flush(HyRenderer2D* renderer);
+internal void HyRenderer2D_Init(HyRenderer2D* renderer);
+internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer);
+//internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera);
+internal void HyRenderer2D_EndScene(HyRenderer2D* renderer);
+internal void HyRenderer2D_Flush(HyRenderer2D* renderer);
 
-static HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer);
-static void HY_Renderer2D_ResetStats(HyRenderer2D* renderer);
+internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer);
+internal void HY_Renderer2D_ResetStats(HyRenderer2D* renderer);
 
-static void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color);
-static void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color);
-//static void DrawQuad3T(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID);
-static void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID);
+internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color);
+internal void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color);
+//internal void DrawQuad3T(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID);
+internal void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID);
 
-static HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer)
+internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer)
 {
     return renderer->stats;
 }
 
-static void HyRenderer2D_ResetStats(HyRenderer2D* renderer)
+internal void HyRenderer2D_ResetStats(HyRenderer2D* renderer)
 {
     memset(&renderer->stats, 0, sizeof(HyRenderer2DStats));
 }
 
-static void HyRenderer2D_Init(HyRenderer2D* renderer)
+internal void HyRenderer2D_Init(HyRenderer2D* renderer)
 {
     HY_ASSERT(!renderer->quadVertexBufferBase, "Called HyRenderer2D_Init more than once.");
     
@@ -1146,7 +1146,7 @@ static void HyRenderer2D_Init(HyRenderer2D* renderer)
     HyRenderer2D_ResetStats(renderer);
 }
 
-static void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
+internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
 {
     GL_CALL(glDeleteVertexArrays(1, &renderer->vao));
     GL_CALL(glDeleteBuffers (1, &renderer->vbo));
@@ -1157,7 +1157,7 @@ static void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
     GL_CALL(glDeleteTextures(1, &renderer->whiteTexture));
 }
 
-static void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
+internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
 {
     // TODO(alex): Camera default to NULL;
     if (camera)
@@ -1180,7 +1180,7 @@ static void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
     //GL_CALL(glUniform1iv(loc, 32, samplers));
 }
 
-static void HyRenderer2D_EndScene(HyRenderer2D* renderer)
+internal void HyRenderer2D_EndScene(HyRenderer2D* renderer)
 {
     uint32_t size = (uint32_t)((uint8_t *)renderer->quadVertexBufferPtr - (uint8_t *)renderer->quadVertexBufferBase);
     
@@ -1190,7 +1190,7 @@ static void HyRenderer2D_EndScene(HyRenderer2D* renderer)
     HyRenderer2D_Flush(renderer);
 }
 
-static void HyRenderer2D_Flush(HyRenderer2D* renderer)
+internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
 {
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i)
     {
@@ -1202,7 +1202,7 @@ static void HyRenderer2D_Flush(HyRenderer2D* renderer)
     renderer->stats.drawCount++;
 }
 
-static void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID, HyVec4* color)
+internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID, HyVec4* color)
 {
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
@@ -1260,7 +1260,7 @@ static void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* si
     renderer->stats.quadCount++;
 }
 
-static void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color)
+internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color)
 {
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
@@ -1298,183 +1298,16 @@ static void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* 
     renderer->stats.quadCount++;
 }
 
-static void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID)
+internal void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID)
 {
     HyVec3 temp = { pos->x, pos->y, 1.0f };
     //DrawQuad3T(renderer, &temp, size, textureID);
 }
 
-static void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color)
+internal void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color)
 {
     HyVec3 tempPos = { pos->x, pos->y, 1.0f };
     DrawQuad3C(renderer, &tempPos, size, color);
-}
-
-//~ Mesh
-
-#if 0
-
-typedef struct
-{
-    HyVec3 position;
-    HyVec3 normal;
-    HyVec2 texCoords;
-} HyVertex;
-
-typedef struct
-{
-    HyVertex* vertices;
-    uint32_t* indices;
-    HyTexture* textures;
-    
-    uint32_t vertexCount;
-    uint32_t indexCount;
-    uint32_t textureCount;
-    
-    uint32_t VAO, VBO, EBO;
-} HyMesh;
-
-struct HyModel
-{
-    HyMesh* meshes;
-    uint32_t meshCount;
-};
-
-static HyMesh HyMesh_Create(HyVertex* pVertices, uint32_t vertexCount,
-                            uint32_t* pIndices, uint32_t indexCount,
-                            HyTexture* pTextures, uint32_t textureCount)
-{
-    HyMesh mesh;
-    
-    mesh.vertices = pVertices;
-    mesh.vertexCount = vertexCount;
-    mesh.indices = pIndices;
-    mesh.indexCount = indexCount;
-    mesh.textures = pTextures;
-    mesh.textureCount = textureCount;
-    
-    // TODO(alex): use our own vertex array
-    
-    GL_CALL(glGenVertexArrays(1, &mesh.VAO));
-    GL_CALL(glBindVertexArray(mesh.VAO));
-    
-    GL_CALL(glGenBuffers(1, &mesh.VBO));
-    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO));
-    GL_CALL(glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(HyVertex), pVertices, GL_STATIC_DRAW));
-    
-    GL_CALL(glGenBuffers(1, &mesh.EBO));
-    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO));
-    GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32_t), pIndices, GL_STATIC_DRAW));
-    
-    // vertex positions
-    GL_CALL(glEnableVertexAttribArray(0));
-    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(HyVertex), (void*)offsetof(HyVertex, position)));
-    // vertex normals
-    GL_CALL(glEnableVertexAttribArray(1));
-    GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(HyVertex), (void*)offsetof(HyVertex, normal)));
-    // vertex texture coords
-    GL_CALL(glEnableVertexAttribArray(2));
-    GL_CALL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(HyVertex), (void*)offsetof(HyVertex, texCoords)));
-    
-    GL_CALL(glBindVertexArray(0));
-    
-    return mesh;
-}
-
-
-static HyModel HY_Model_Create(const char* path);
-static void HY_Model_ProcessNode(aiNode* node, aiScene* scene);
-static HyMesh HY_Model_ProcessMesh(aiMesh* mesh, aiScene* scene);
-
-static HyModel HY_Model_Create(const char* path)
-{
-    HyModel hyModel = {0};
-    
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-    
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
-    {
-        HY_CORE_ASSERT(false, "Can't load model");
-        return;
-    }
-    
-    hyModel.directory = ".\assets";
-    
-    return hyModel;
-}
-
-static void HY_Model_ProcessNode(HyModel* pModel, aiNode* node, aiScene* scene)
-{
-    // process all the node's meshes (if any)
-    for(uint32_t i = 0; i < node->mNumMeshes; ++i)
-    {
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene));
-    }
-    // then do the same for each of its children
-    for(unsigned int i = 0; i < node->mNumChildren; i++)
-    {
-        processNode(node->mChildren[i], scene);
-    }
-}
-
-static HyMesh HY_Model_ProcessMesh(aiMesh* mesh, aiScene* scene)
-{
-    HyVertex* vertices;
-    uint32_t* indices;
-    HyTexture* textures;
-    
-    for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
-    {
-        HyVertex vertex;
-        // process vertex positions, normals and texture coordinates
-        vertex.position = HyVec3 {
-            mesh->mVertices[i].x,
-            mesh->mVertices[i].y,
-            mesh->mVertices[i].z
-        };
-        vertex.normals = HyVec3 {
-            mesh->mNormals[i].x,
-            mesh->mNormals[i].y,
-            mesh->mNormals[i].z
-        };
-        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-        {
-            HyVec2 vec;
-            vertex.texCoords = HyVec2 {
-                mesh->mTextureCoords[0][i].x,
-                mesh->mTextureCoords[0][i].y
-            };
-        }
-        else
-        {
-            vertex.texCoords = HyVec2(0.0f, 0.0f);
-        }
-        vertices.push_back(vertex);
-    }
-    
-    // process indices
-    for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
-    {
-        aiFace face = mesh->mFaces[i];
-        for(uint32_t j = 0; j < face.mNumIndices; ++j)
-        {
-            indices.push_back(face.mIndices[j]);
-        }
-    } 
-    
-    // process material
-    if(mesh->mMaterialIndex >= 0)
-    {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    }
-    
-    return Mesh(vertices, indices, textures);
 }
 
 //~ Renderer
@@ -1484,7 +1317,7 @@ typedef struct
     HyCamera* camera;
 } HyRenderer;
 
-static void HyRenderer_Init(HyRenderer* renderer)
+internal void HyRenderer_Init(HyRenderer* renderer)
 {
     // TODO(alex): Check if error callback is supported
     glEnable(GL_DEBUG_OUTPUT);
@@ -1493,80 +1326,22 @@ static void HyRenderer_Init(HyRenderer* renderer)
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 }
 
-static void HY_Renderer_BeginScene(HyRenderer* renderer, HyCamera* camera = NULL)
-{
-    if (camera)
-    {
-        renderer->camera = camera;
-    }
-    
-    //HY_ASSERT(renderer->camera, "Renderer camera non passed on BeginScene()");
-}
-
-static void HY_Renderer_SubmitMesh(HyRenderer* pRenderer, HyMesh* pMesh, HyShader* pShader, glm::mat4* pModel)
-{
-    HY_Shader_Bind(pShader);
-    HY_Shader_SetMat4(pShader, "u_Model", pModel); // TODO(alex): use ecs
-    HY_Shader_SetMat4(pShader, "u_View", &pRenderer->camera->viewMatrix);
-    HY_Shader_SetMat4(pShader, "u_Projection", &pRenderer->camera->projectionMatrix);
-    
-    // TODO(alex): Use correct mesh textures
-    
-    GL_CALL(glBindVertexArray(pMesh->VAO));
-    GL_CALL(glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0));
-    //GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 36));
-    GL_CALL(glBindVertexArray(0));
-}
-
-static void HY_Renderer_SubmitModel(HyModel* pModel, HyShader* pShader)
-{
-    for (uint32_t i = 0; i < pModel->meshCount; ++i)
-    {
-        HY_Renderer_SubmitMesh(pModel->meshes[i], pShader);
-    }
-}
-
-static void HY_Renderer_Submit(HyRenderer* renderer, HyShader* shader)
-{
-    HY_Shader_Bind(shader);
-    HY_Shader_SetMat4(shader, "u_View", &renderer->camera->viewMatrix);
-    HY_Shader_SetMat4(shader, "u_Projection", &renderer->camera->projectionMatrix);
-}
-
-static void HY_Renderer_Submit(HyRenderer* renderer, HyShader* shader, HyVertexArray* vertexArray)
-{
-    HY_PROFILE_FUNCTION();
-    
-    HY_Shader_Bind(shader);
-    HY_VertexArray_Bind(vertexArray);
-    
-    HY_Shader_SetMat4(shader, "u_View", &renderer->camera->viewMatrix);
-    HY_Shader_SetMat4(shader, "u_Projection", &renderer->camera->projectionMatrix);
-    
-    GL_CALL(glDrawArrays(GL_TRIANGLES, 0, vertexArray->vertexBuffers[0]->size));
-}
-
-static void HY_Renderer_EndScene()
-{
-}
-#endif
-
-static void HY_SetClearColorCmd(HyColor* color)
+internal void HY_SetClearColorCmd(HyColor* color)
 {
     GL_CALL(glClearColor(color->r, color->g, color->b, color->a));
 }
 
-static void HY_SetClearColorCmdByColors(float r, float g, float b, float a)
+internal void HY_SetClearColorCmdByColors(float r, float g, float b, float a)
 {
     GL_CALL(glClearColor(r, g, b, a));
 }
 
-static void HY_ClearCmd()
+internal void HY_ClearCmd()
 {
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
-static void HY_ClearColorCmd()
+internal void HY_ClearColorCmd()
 {
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 }

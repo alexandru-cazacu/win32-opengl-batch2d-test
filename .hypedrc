@@ -1,5 +1,3 @@
 [window]
 startMode = maximized ; auto | maximized | fullscreen
 
-[misc]
-user = ; auto | maximized | fullscreen

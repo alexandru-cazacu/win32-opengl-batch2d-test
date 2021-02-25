@@ -7,10 +7,20 @@ typedef struct
     int borderless_resize; // should the window allow resizing by dragging the borders while borderless
     int borderless_drag;   // should the window allow moving my dragging the client area
     int borderless_shadow; // should the window display a native aero shadow while borderless
-    HWND WindowHandle;
-    b32 ShouldClose;
-    HDC DeviceContext;
+    b32 shouldClose;
+    HWND handle;
+    HDC deviceContext;
+    HGLRC renderingContext;
+    WNDCLASSA windowClass;
+    b32 fullscreen;
 } HyWindow;
+
+typedef enum HyWindowStartMode
+{
+    HyWindowStartMode_Auto,
+    HyWindowStartMode_Maximized,
+    HyWindowStartMode_Fullscreen
+} HyWindowStartMode;
 
 // we cannot just use WS_POPUP style
 // WS_THICKFRAME: without this the window cannot be resized and so aero snap, de-maximizing and minimizing won't work
@@ -23,6 +33,9 @@ typedef enum Style {
     StyleBasicBorderless = WS_POPUP            | WS_THICKFRAME              | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX
 } Style;
 
+///
+///
+///
 internal int Win32IsMaximized(HWND hwnd)
 {
     WINDOWPLACEMENT placement;
@@ -76,7 +89,7 @@ internal void Win32SetShadow(HWND handle, int enabled)
 {
     if (Win32IsCompositionEnabled())
     {
-        static const MARGINS shadowState[2] = {
+        local_persist const MARGINS shadowState[2] = {
             { 0,0,0,0 }, { 1,1,1,1 }
             //{ 0,0,0,0 }
         };
@@ -87,33 +100,33 @@ internal void Win32SetShadow(HWND handle, int enabled)
 internal void Win32SetBorderless(HyWindow* hyWindow, int enabled)
 {
     Style newStyle = (enabled) ? Win32SelectBorderlessStyle() : StyleWindowed;
-    Style oldStyle = (Style)GetWindowLongPtrA(hyWindow->WindowHandle, GWL_STYLE);
+    Style oldStyle = (Style)GetWindowLongPtrA(hyWindow->handle, GWL_STYLE);
     
     if (newStyle != oldStyle)
     {
         hyWindow->borderless = enabled;
         
-        SetWindowLongPtrA(hyWindow->WindowHandle, GWL_STYLE, (LONG)newStyle);
+        SetWindowLongPtrA(hyWindow->handle, GWL_STYLE, (LONG)newStyle);
         
         // when switching between borderless and windowed, restore appropriate shadow state
-        Win32SetShadow(hyWindow->WindowHandle, hyWindow->borderless_shadow && (newStyle != StyleWindowed));
+        Win32SetShadow(hyWindow->handle, hyWindow->borderless_shadow && (newStyle != StyleWindowed));
         
         // redraw frame
-        SetWindowPos(hyWindow->WindowHandle, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
-        ShowWindow(hyWindow->WindowHandle, SW_SHOW);
+        SetWindowPos(hyWindow->handle, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
+        ShowWindow(hyWindow->handle, SW_SHOW);
     }
 }
 
-static void Win32SetBorderlessShadow(HyWindow* hyWindow, int enabled)
+internal void Win32SetBorderlessShadow(HyWindow* hyWindow, int enabled)
 {
     if (hyWindow->borderless)
     {
         hyWindow->borderless_shadow = enabled;
-        Win32SetShadow(hyWindow->WindowHandle, enabled);
+        Win32SetShadow(hyWindow->handle, enabled);
     }
 }
 
-static LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
+internal LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
 {
     // identify borders and corners to allow resizing the window.
     // Note: On Windows 10, windows behave differently and
@@ -124,7 +137,7 @@ static LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
         GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER)
     };
     RECT window;
-    if (!GetWindowRect(hyWindow->WindowHandle, &window))
+    if (!GetWindowRect(hyWindow->handle, &window))
     {
         return HTNOWHERE;
     }
@@ -157,37 +170,6 @@ static LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
         case bottom | right: return hyWindow->borderless_resize ? HTBOTTOMRIGHT : drag;
         case client        : return drag;
         default            : return HTNOWHERE;
-    }
-}
-
-internal b32 HyWindowShouldClose(HyWindow* window)
-{
-    return window->ShouldClose;
-}
-
-internal void HyProcessPendingMessages(HyWindow* window)
-{
-    MSG message;
-    
-    // NOTE(alex): GetMessage = blocking, PeekMessage = non blocking
-    while (PeekMessageA(&message, 0, 0, 0, PM_REMOVE)) {
-        switch(message.message) {
-            case WM_QUIT: { // received from PostQuitMessage()
-                window->ShouldClose = true;
-            } break;
-            
-            case WM_KEYDOWN: {
-                u32 vkCode = (u32)message.wParam;
-                if (vkCode == 0x1B) {
-                    window->ShouldClose = true;
-                }
-            } break;
-            
-            default: {
-                TranslateMessage(&message);
-                DispatchMessage(&message); // Dispatch to Win32WindowCallback()
-            }
-        }
     }
 }
 
@@ -273,13 +255,56 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
     return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
+//~
+// Public facing functions.
+//
+
 internal void HySwapBuffers(HyWindow* window)
 {
-    SwapBuffers(window->DeviceContext);
+    SwapBuffers(window->deviceContext);
 }
 
-/// @brief Creates a new Window with a modern OpenGL context.
-internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
+///
+///
+///
+internal b32 HY_WindowShouldClose(HyWindow* window)
+{
+    return window->shouldClose;
+}
+
+///
+///
+///
+internal void HY_PollEvents(HyWindow* window)
+{
+    MSG message;
+    
+    // NOTE(alex): GetMessage = blocking, PeekMessage = non blocking
+    while (PeekMessageA(&message, 0, 0, 0, PM_REMOVE)) {
+        switch(message.message) {
+            case WM_QUIT: { // received from PostQuitMessage()
+                window->shouldClose = true;
+            } break;
+            
+            case WM_KEYDOWN: {
+                u32 vkCode = (u32)message.wParam;
+                if (vkCode == 0x1B) {
+                    window->shouldClose = true;
+                }
+            } break;
+            
+            default: {
+                TranslateMessage(&message);
+                DispatchMessage(&message); // Dispatch to Win32WindowCallback()
+            }
+        }
+    }
+}
+
+///
+/// Creates a new Window with a modern OpenGL context.
+///
+internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, const char* title)
 {
     if (!g_HyperEngineInitialized) {
         return HY_NOT_INITIALIZED;
@@ -368,7 +393,7 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
                              1280, 720, // width, height
                              0, 0, hInstance, hyWindow); // parent window, menu, instance. param
     
-    hyWindow->WindowHandle = WND;
+    hyWindow->handle = WND;
     
     HDC DC = GetDC(WND);
     
@@ -428,8 +453,8 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     
     g_HyperRendererBootstrapping = false;
     
-    hyWindow->WindowHandle = WND;
-    hyWindow->DeviceContext = DC;
+    hyWindow->handle = WND;
+    hyWindow->deviceContext = DC;
     
     hyWindow->borderless = true;
     hyWindow->borderless_resize = true;
@@ -439,7 +464,7 @@ internal int HyCreateWindow(HyWindow* hyWindow, const char* title)
     Win32SetBorderless(hyWindow, true);
     Win32SetBorderlessShadow(hyWindow, true);
     SetWindowTextA(WND, (LPCSTR)glGetString(GL_VERSION));
-    ShowWindow(hyWindow->WindowHandle, SW_SHOW);
+    ShowWindow(hyWindow->handle, SW_SHOW);
     
     return HY_NO_ERROR;
 }

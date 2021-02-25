@@ -35,20 +35,13 @@ const char *fragmentShaderSource = "#version 330 core\n"
 "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 "}\n\0";
 
-typedef enum HyWindowStartMode
-{
-    HyWindowStartMode_Auto,
-    HyWindowStartMode_Maximized,
-    HyWindowStartMode_Fullscreen
-} HyWindowStartMode;
-
 typedef struct
 {
     HyWindowStartMode startMode;
     const char* user;
 } HyConfig;
 
-static int configHandler(void* user, const char* section, const char* name, const char* value)
+internal int configHandler(void* user, const char* section, const char* name, const char* value)
 {
     HyConfig* config = (HyConfig*)user;
     
@@ -105,7 +98,7 @@ int main()
     }
     
     HyWindow window = {0};
-    HyCreateWindow(&window, "Hyped");
+    HY_CreateWindow(&window, config.startMode, "Hyped");
     
     if (!&window) {
         MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);
@@ -183,9 +176,7 @@ int main()
     
     glViewport(0, 0, 1920, 1080);
     
-    while (!HyWindowShouldClose(&window)) {
-        HyProcessPendingMessages(&window);
-        
+    while (!HY_WindowShouldClose(&window)) {
         glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -194,6 +185,9 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
         HySwapBuffers(&window);
+        
+        HY_PollEvents(&window);
+        
         Sleep(1);
     }
     

@@ -23,12 +23,12 @@
 #define HY_ERROR(...)   HY_Log(__VA_ARGS__, __FILE__, __LINE__, ANSI_COLOR_RED, "ERROR")
 #define HY_FATAL(...)   HY_Log(__VA_ARGS__, __FILE__, __LINE__, ANSI_COLOR_RED ANSI_COLOR_BOLD, "FATAL")
 
-static void HY_LogInit();
-static void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level);
+internal void HY_LogInit();
+internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level);
 
-static BOOL g_LogEnableColors = false;
+global_variable BOOL g_LogEnableColors = false;
 
-static void HY_LogInit(BOOL useColors)
+internal void HY_LogInit(BOOL useColors)
 {
     g_LogEnableColors = useColors;
     
@@ -42,7 +42,7 @@ static void HY_LogInit(BOOL useColors)
     HY_INFO("[Logger] Initialized.");
 }
 
-static void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)
+internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)
 {
     const char* usedColor = g_LogEnableColors ? color : "";
     const char* usedResetColor = g_LogEnableColors ? ANSI_COLOR_RESET : "";
@@ -83,6 +83,6 @@ static void HY_Log(const char* msg, const char* file, int line, const char* colo
 #define HY_ERROR(...)
 #define HY_FATAL(...)
 
-static void HY_InitLog() {}
+internal void HY_InitLog() {}
 
 #endif // HY_ENABLE_LOG
