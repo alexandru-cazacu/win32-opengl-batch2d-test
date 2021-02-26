@@ -1,3 +1,5 @@
 [window]
-startMode = maximized ; auto | maximized | fullscreen
+startMode = auto ; auto | maximized | fullscreen
 
+[theme]
+background = 161616FF ; RGBA

@@ -42,6 +42,8 @@ internal void HY_LogInit(BOOL useColors)
     HY_INFO("[Logger] Initialized.");
 }
 
+// TODO(alex): Make logger be able to print longer messages.
+// TODO(alex): Make logger be able to take a formatted string.
 internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)
 {
     const char* usedColor = g_LogEnableColors ? color : "";

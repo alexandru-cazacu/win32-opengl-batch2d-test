@@ -141,7 +141,9 @@ const char* gl_function_names[] = {
 
 void* gl_function_pointers[sizeof(gl_function_names)/sizeof(const char*)];
 
+///
 /// Returns the number of functions that failed to load.
+///
 internal int HY_LoadGlFunctions() {
     int failed = 0;
 	for (int i = 0; i < sizeof(gl_function_names) / sizeof(const char*); i++) {
@@ -150,6 +152,7 @@ internal int HY_LoadGlFunctions() {
 		gl_function_pointers[i] = ptr;
 		if (ptr == NULL) {
             OutputDebugStringA("Failed");
+            fprintf(stdout, "Failed to load extension: %s\n", name);
 			failed++;
 		}
 	}
@@ -1204,6 +1207,7 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
 
 internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID, HyVec4* color)
 {
+#if 0
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31)
@@ -1258,10 +1262,12 @@ internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* 
     
     renderer->quadIndexCount += 6;
     renderer->stats.quadCount++;
+#endif
 }
 
 internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color)
 {
+#if 0
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount)
@@ -1296,18 +1302,19 @@ internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2
     
     renderer->quadIndexCount += 6;
     renderer->stats.quadCount++;
+#endif
 }
 
 internal void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID)
 {
-    HyVec3 temp = { pos->x, pos->y, 1.0f };
+    //HyVec3 temp = { pos->x, pos->y, 1.0f };
     //DrawQuad3T(renderer, &temp, size, textureID);
 }
 
 internal void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color)
 {
-    HyVec3 tempPos = { pos->x, pos->y, 1.0f };
-    DrawQuad3C(renderer, &tempPos, size, color);
+    //HyVec3 tempPos = { pos->x, pos->y, 1.0f };
+    //DrawQuad3C(renderer, &tempPos, size, color);
 }
 
 //~ Renderer

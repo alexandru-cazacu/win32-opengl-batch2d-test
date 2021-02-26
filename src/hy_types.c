@@ -66,4 +66,4 @@ inline u32 SafeTruncateU64(u64 value)
 
 global_variable int g_HyperEngineInitialized = true;
 global_variable int g_HyperLastErrorCode = 0;
-global_variable int g_HyperRendererBootstrapping = false;
+global_variable const char* g_GlExtension = "";

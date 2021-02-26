@@ -11,9 +11,9 @@
 #include "resources.h"
 #include "hy_types.c"
 #include "hy_log.c"
-#include "hy_window.c"
 #include "hy_file.c"
 #include "hy_renderer_2d.c"
+#include "hy_window.c"
 #include "hy_time.c"
 
 #pragma warning(disable:4996)
@@ -63,6 +63,15 @@ internal int configHandler(void* user, const char* section, const char* name, co
     return 1;
 }
 
+void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
+{
+    printf("Resize callback (%d, %d)\n", width, height);
+    glViewport(0, 0, width, height);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
+    glClear(GL_COLOR_BUFFER_BIT);
+    HY_SwapBuffers(hyWindow);
+}
+
 int main()
 {
     HY_LogInit(false);
@@ -98,6 +107,7 @@ int main()
     }
     
     HyWindow window = {0};
+    HY_SetWindowSizeCallback(&window, SizeCallback);
     HY_CreateWindow(&window, config.startMode, "Hyped");
     
     if (!&window) {
@@ -105,7 +115,6 @@ int main()
         ExitProcess(0);
     }
     
-    HY_LoadGlFunctions();
     
     // build and compile our shader program
     // ------------------------------------
@@ -150,9 +159,9 @@ int main()
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-        0.5f, -0.5f, 0.0f, // right 
-        0.0f,  0.5f, 0.0f  // top   
+        -1.0f, 0.85f, 0.0f, // left  
+        1.0f, 1.0f, 0.0f, // right 
+        -1.0f,  1.0f, 0.0f  // top   
     }; 
     
     unsigned int VBO, VAO;
@@ -174,17 +183,21 @@ int main()
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
     
-    glViewport(0, 0, 1920, 1080);
+    //glViewport(0, 0, 1920, 1080);
+    
+    //glViewport(0, 0, width, height);
     
     while (!HY_WindowShouldClose(&window)) {
-        glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
+        //glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
+        //glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // rgb(33,150,243)
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
         glClear(GL_COLOR_BUFFER_BIT);
         
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
-        HySwapBuffers(&window);
+        HY_SwapBuffers(&window);
         
         HY_PollEvents(&window);
         

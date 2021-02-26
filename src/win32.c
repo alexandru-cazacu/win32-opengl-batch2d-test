@@ -1,5 +1,5 @@
-#define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
-#include <sdkddkver.h>
+//#define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
+//#include <sdkddkver.h>
 
 // Disables unused Windows functions and makes build times faster.
 // Commented out the functions we actually need.
