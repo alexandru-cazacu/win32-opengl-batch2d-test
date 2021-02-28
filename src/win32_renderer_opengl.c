@@ -587,36 +587,6 @@ internal void HyFramebuffer_Unbind()
 
 typedef struct
 {
-    // TODO(alex): Mat not vec
-    float x;
-    float y;
-    float z;
-    float w;
-} HyMat4;
-
-typedef struct
-{
-    float x;
-    float y;
-} HyVec2;
-
-typedef struct
-{
-    float x;
-    float y;
-    float z;
-} HyVec3;
-
-typedef struct
-{
-    float x;
-    float y;
-    float z;
-    float w;
-} HyVec4;
-
-typedef struct
-{
     float r;
     float g;
     float b;
@@ -625,23 +595,23 @@ typedef struct
 
 typedef struct
 {
-    HyMat4 projectionMatrix;
-    HyMat4 viewMatrix;
-    HyMat4 viewProjectionMatrix;
+    mat4 projectionMatrix;
+    mat4 viewMatrix;
+    mat4 viewProjectionMatrix;
     
-    HyVec3 position;
-    HyVec3 rotation;
-    HyVec3 scale;
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
     
     float fov;
     float nearPlane;
     float farPlane;
     
-    HyVec3 worldUp;
+    vec3 worldUp;
     
-    HyVec3 right;
-    HyVec3 up;
-    HyVec3 front;
+    vec3 right;
+    vec3 up;
+    vec3 front;
 } HyCamera;
 
 //~ Buffer Element
@@ -773,30 +743,6 @@ internal HyBufferElement HY_BufferElement_Create(HyShaderDataType dataType, cons
     bufferElement.normalized = normalized;
     
     return bufferElement;
-}
-
-internal void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
-{
-    int success;
-    char infoLog[1024];
-    if (strcmp(type, "PROGRAM") != 0)
-    {
-        GL_CALL(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
-        if (!success)
-        {
-            GL_CALL(glGetShaderInfoLog(shader, 1024, NULL, infoLog));
-            //HY_ERROR("{}", infoLog);
-        }
-    }
-    else
-    {
-        GL_CALL(glGetProgramiv(shader, GL_LINK_STATUS, &success));
-        if (!success)
-        {
-            //GL_CALL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
-            //HY_ERROR("{}", infoLog);
-        }
-    }
 }
 
 //~ Vertex buffer
@@ -976,6 +922,30 @@ typedef struct
     // TODO(alex): Implement
 } HyShaderLibrary;
 
+internal void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
+{
+    int success;
+    char infoLog[1024];
+    if (strcmp(type, "PROGRAM") != 0)
+    {
+        GL_CALL(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
+        if (!success)
+        {
+            GL_CALL(glGetShaderInfoLog(shader, 1024, NULL, infoLog));
+            //HY_ERROR("{}", infoLog);
+        }
+    }
+    else
+    {
+        GL_CALL(glGetProgramiv(shader, GL_LINK_STATUS, &success));
+        if (!success)
+        {
+            //GL_CALL(glGetProgramInfoLog(shader, 1024, NULL, infoLog));
+            //HY_ERROR("{}", infoLog);
+        }
+    }
+}
+
 internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFilePath)
 {
     // TODO(alex): May fail.
@@ -1062,14 +1032,14 @@ internal void HY_Shader_SetInt(HyShader* shader, const char* name, int value)
     GL_CALL(glUniform1i(loc, value));
 }
 
-internal void HY_Shader_SetFloat4(HyShader* shader, const char* name, const HyVec4 value)
+internal void HY_Shader_SetFloat4(HyShader* shader, const char* name, const vec4 value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
     //GL_CALL(glUniform4f(loc, value.x, value.y, value.z, value.w));
 }
 
-internal void HY_Shader_SetFloat3(HyShader* shader, const char* name, const HyVec3* value)
+internal void HY_Shader_SetFloat3(HyShader* shader, const char* name, const vec3* value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
@@ -1083,7 +1053,7 @@ internal void HY_Shader_SetFloat(HyShader* shader, const char* name, float value
     GL_CALL(glUniform1f(loc, value));
 }
 
-internal void HY_Shader_SetMat4(HyShader* shader, const char* name, const HyMat4* value)
+internal void HY_Shader_SetMat4(HyShader* shader, const char* name, const mat4* value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
@@ -1118,19 +1088,30 @@ internal void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
 
 typedef struct
 {
-    HyMat4 projectionMatrix;
-    HyMat4 viewMatrix;
-    HyMat4 viewProjectionMatrix;
+    mat4 projectionMatrix;
+    mat4 viewMatrix;
+    mat4 viewProjectionMatrix;
     
     float width;
     float height;
     float nearPlane;
     float farPlane;
     
-    HyVec4 viewport;
+    vec4 viewport;
 } HyCamera2D;
 
-internal void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane);
+internal void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane)
+{
+    camera->width = width;
+    camera->height = height;
+    camera->nearPlane = nearPlane;
+    camera->farPlane = farPlane;
+    
+    glm_mat4_identity(camera->viewMatrix);
+    glm_ortho(0.0f, width, 0.0f, height, nearPlane, farPlane, camera->projectionMatrix);
+    glm_ortho(0.0f, width, 0.0f, height, nearPlane, farPlane, camera->viewProjectionMatrix);
+    glm_vec4_copy((vec4){ 0.0f, 0.0f, width, height }, camera->viewport);
+}
 
 internal HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane, float farPlane)
 {
@@ -1141,29 +1122,12 @@ internal HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane
     return camera;
 }
 
-internal void HyCamera2D_Resize(HyCamera2D *camera, float width, float height, float nearPlane, float farPlane)
-{
-    camera->width = width;
-    camera->height = height;
-    camera->nearPlane = nearPlane;
-    camera->farPlane = farPlane;
-    
-    // TODO(alex): Implement
-#if 0
-    camera->viewMatrix = glm::mat4(1.0f);
-    camera->projectionMatrix = glm::ortho(0.0f, width, 0.0f, height, nearPlane, farPlane);
-    camera->viewProjectionMatrix = glm::ortho(0.0f, width, 0.0f, height, nearPlane, farPlane);
-    
-    camera->viewport = glm::vec4 { 0.0f, 0.0f, width, height };
-#endif
-}
-
 typedef struct
 {
-    HyVec3 Pos;
-    HyVec4 Color;
-    HyVec2 TexCoord;
+    vec3 Pos;
     float TexIndex;
+    vec4 Color;
+    vec2 TexCoord;
 } HyQuadVertex;
 
 typedef struct
@@ -1209,10 +1173,10 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer);
 internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer);
 internal void HY_Renderer2D_ResetStats(HyRenderer2D* renderer);
 
-internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color);
-internal void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color);
-//internal void DrawQuad3T(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID);
-internal void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID);
+internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color);
+internal void DrawQuad2C(HyRenderer2D* renderer, vec2* pos, vec2* size, vec4* color);
+//internal void DrawQuad3T(HyRenderer2D* renderer, vec3* pos, vec2* size, uint32_t textureID);
+internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t textureID);
 
 internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer)
 {
@@ -1227,6 +1191,12 @@ internal void HyRenderer2D_ResetStats(HyRenderer2D* renderer)
 internal void HyRenderer2D_Init(HyRenderer2D* renderer)
 {
     HY_ASSERT(!renderer->quadVertexBufferBase, "Called HyRenderer2D_Init more than once.");
+    
+    // TODO(alex): Check if error callback is supported
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); 
+    glDebugMessageCallback(glDebugOutput, NULL);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     
     renderer->maxQuadCount = 10000; // Actaully it crashes
     renderer->maxVertexCount = renderer->maxQuadCount * 4;
@@ -1314,8 +1284,9 @@ internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
 internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
 {
     // TODO(alex): Camera default to NULL;
-    if (camera)
+    if (camera) {
         renderer->camera = camera;
+    }
     
     HY_Shader_Bind(renderer->textureShader);
     HY_Shader_SetMat4(renderer->textureShader, "u_View", &renderer->camera->viewMatrix);
@@ -1356,7 +1327,7 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
     renderer->stats.drawCount++;
 }
 
-internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, uint32_t textureID, HyVec4* color)
+internal void DrawQuad(HyRenderer2D* renderer, const vec3* pos, const vec2* size, uint32_t textureID, vec4* color)
 {
 #if 0
     // Checks if we have room in our current batch for more quads.
@@ -1387,27 +1358,27 @@ internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* 
     	renderer->textureSlotIndex++;
     }
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x, pos->y, pos->z };
+    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x, pos->y, pos->z };
     renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 0.0f, 0.0f };
+    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 0.0f, 0.0f };
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x + size->x, pos->y, pos->z };
+    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x + size->x, pos->y, pos->z };
     renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 1.0f, 0.0f };
+    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 1.0f, 0.0f };
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x + size->x, pos->y + size->y, pos->z };
+    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x + size->x, pos->y + size->y, pos->z };
     renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord =  (HyVec2){ 1.0f, 1.0f };
+    renderer->quadVertexBufferPtr->TexCoord =  (vec2){ 1.0f, 1.0f };
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x, pos->y + size->y, pos->z };
+    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x, pos->y + size->y, pos->z };
     renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 0.0f, 1.0f };
+    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 0.0f, 1.0f };
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
@@ -1416,9 +1387,8 @@ internal void DrawQuad(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* 
 #endif
 }
 
-internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2* size, const HyVec4* color)
+internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color)
 {
-#if 0
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount)
@@ -1427,61 +1397,44 @@ internal void DrawQuad3C(HyRenderer2D* renderer, const HyVec3* pos, const HyVec2
     	HyRenderer2D_BeginScene(renderer, NULL);
     }
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x, pos->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 0.0f, 0.0f };
+    glm_vec3_copy(pos, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 0.0f, 0.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x + size->x, pos->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 1.0f, 0.0f };
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 1.0f, 0.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x + size->x, pos->y + size->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 1.0f, 1.0f };
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 1.0f, 1.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (HyVec3){ pos->x, pos->y + size->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (HyVec2){ 0.0f, 1.0f };
+    glm_vec3_copy((vec3){ pos[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 0.0f, 1.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
     renderer->quadIndexCount += 6;
     renderer->stats.quadCount++;
-#endif
 }
 
-internal void DrawQuad2T(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, uint32_t textureID)
+internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t textureID)
 {
-    //HyVec3 temp = { pos->x, pos->y, 1.0f };
+    //vec3 temp = { pos->x, pos->y, 1.0f };
     //DrawQuad3T(renderer, &temp, size, textureID);
 }
 
-internal void DrawQuad2C(HyRenderer2D* renderer, const HyVec2* pos, const HyVec2* size, const HyVec4* color)
+internal void DrawQuad2C(HyRenderer2D* renderer, vec2* pos, vec2* size, vec4* color)
 {
-    //HyVec3 tempPos = { pos->x, pos->y, 1.0f };
+    //vec3 tempPos = { pos->x, pos->y, 1.0f };
     //DrawQuad3C(renderer, &tempPos, size, color);
-}
-
-//~ Renderer
-
-typedef struct
-{
-    HyCamera* camera;
-} HyRenderer;
-
-internal void HyRenderer_Init(HyRenderer* renderer)
-{
-    // TODO(alex): Check if error callback is supported
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); 
-    glDebugMessageCallback(glDebugOutput, NULL);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 }
 
 internal void HY_SetClearColorCmd(HyColor* color)

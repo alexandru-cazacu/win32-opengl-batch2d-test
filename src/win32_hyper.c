@@ -59,6 +59,11 @@
 #include <gl/glext.h>
 #include <gl/wglext.h>
 
+#pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable:4996) // nonstandard extension used : non-constant aggregate initializer
+#include <cglm/cglm.h>
+#include <cglm/cam.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -78,24 +83,13 @@
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
-const char *vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
-
 typedef struct
 {
     HyWindowStartMode startMode;
     const char* user;
 } HyConfig;
+
+HyCamera2D camera2D;
 
 internal int configHandler(void* user, const char* section, const char* name, const char* value)
 {
@@ -122,10 +116,12 @@ internal int configHandler(void* user, const char* section, const char* name, co
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
     printf("Resize callback (%d, %d)\n", width, height);
-    glViewport(0, 0, width, height);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
-    glClear(GL_COLOR_BUFFER_BIT);
-    HY_SwapBuffers(hyWindow);
+    //glViewport(0, 0, width, height);
+    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    //HY_SwapBuffers(hyWindow);
+    
+    HyCamera2D_Resize(&camera2D, (float)width, (float)height, -100.0f, 0.0f);
 }
 
 // Subsystem:console
@@ -156,47 +152,13 @@ int main(int argc, char *argv[])
         ExitProcess(0);
     }
     
+    camera2D = HyCamera2D_Create(1920, 1080, 0, 1);
+    HyShader* simpleVert = HY_Shader_Create("assets/shaders/simple.vert", "assets/shaders/simple.frag");
     
-    // build and compile our shader program
-    // ------------------------------------
-    // vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        //std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        //std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        //glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        //std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    HyRenderer2D renderer = {0};
+    HyRenderer2D_Init(&renderer);
     
+#if 0
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
@@ -223,16 +185,29 @@ int main(int argc, char *argv[])
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
+#endif
     
     while (!HY_WindowShouldClose(&window)) {
         //glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
         //glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // rgb(33,150,243)
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
-        glClear(GL_COLOR_BUFFER_BIT);
+        //glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
+        //glClear(GL_COLOR_BUFFER_BIT);
         
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        HY_SetClearColorCmd(&(HyColor){0.1f, 0.1f, 0.1f, 0.1f});
+        HY_ClearCmd();
+        
+        
+        //HY_Shader_Bind(simpleVert);
+        //glUseProgram(shaderProgram);
+        //glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        //DrawQuad(&renderer, (vec3){0.0f, 0.0f, 0.0f}, (vec2){1.0f, 1.0f}, 
+        
+        HyRenderer2D_ResetStats(&renderer);
+        HyRenderer2D_BeginScene(&renderer, &camera2D);
+        DrawQuad3C(&renderer, (vec3){0.0f, 0.0f, 0.0f}, (vec2){1920.0f, 100.0f}, (vec4){1.0f, 0.0f, 1.0f, 1.0f});
+        HyRenderer2D_EndScene(&renderer);
         
         HY_SwapBuffers(&window);
         
@@ -241,19 +216,18 @@ int main(int argc, char *argv[])
         Sleep(1);
     }
     
+#if 0
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
+    HY_Shader_Delete(simpleVert);
+#endif
     
-    FreeConsole();
     ExitProcess(0);
 }
 
 // Subsystem:windows
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    HY_INFO("asd");
-    printf("Asd");
     // Read cmd args.
     LPWSTR* argv;
     int argc;

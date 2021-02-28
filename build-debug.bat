@@ -21,6 +21,7 @@ set sharedCompilerFlags=^
     -Fd:%binDir%\%prjName% ^
     -I %cd%\src ^
     -I %cd%\deps ^
+    -I %cd%\deps\cglm\include ^
     -I %cd%\resources ^
     -D HY_SLOW ^
     -D HY_ENABLE_LOG ^
