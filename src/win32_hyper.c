@@ -136,31 +136,15 @@ int main(int argc, char *argv[])
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
     
-    FILE* configFile;
-    fopen_s(&configFile, ".hypedrc", "r");
-    
+    HyFile* configFile = HY_ReadFile(".hypedrc");
     if (configFile) {
-        fseek(configFile, 0, SEEK_END);
-        size_t fileSize = ftell(configFile);
-        char* buffer = (char*)malloc(fileSize + 1);
-        
-        if (buffer) {
-            fseek(configFile, 0, SEEK_SET);
-            fread(buffer, fileSize, 1, configFile);
-            buffer[fileSize] = 0;
-            
-            ini_parse_string(buffer, configHandler, &config);
-            fprintf(stdout,
-                    "Config loaded from '.hypedrc': \n - startMode=%d\n - user=%s\n",
-                    config.startMode,
-                    config.user);
-            
-        } else {
-            // TODO(alex): Logging
-        }
-        fclose(configFile);
+        ini_parse_string(configFile->data, configHandler, &config);
+        fprintf(stdout,
+                "Config loaded from '.hypedrc': \n - startMode=%d\n - user=%s\n",
+                config.startMode,
+                config.user);
     } else {
-        HY_INFO(".hypedrc not found");
+        HY_ERROR(".hypedrc not found");
     }
     
     HyWindow window = {0};
@@ -239,10 +223,6 @@ int main(int argc, char *argv[])
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
-    
-    //glViewport(0, 0, 1920, 1080);
-    
-    //glViewport(0, 0, width, height);
     
     while (!HY_WindowShouldClose(&window)) {
         //glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)

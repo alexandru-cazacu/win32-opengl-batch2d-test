@@ -61,6 +61,12 @@ internal void HY_FreeFileMemory(void* memory)
     }
 }
 
+internal void HY_CloseFile(HyFile* file)
+{
+    VirtualFree(file->data, file->size, MEM_DECOMMIT | MEM_RELEASE);
+    VirtualFree(file, sizeof(HyFile), MEM_DECOMMIT | MEM_RELEASE);
+}
+
 ///
 ///
 ///
