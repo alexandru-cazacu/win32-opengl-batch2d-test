@@ -128,24 +128,10 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     HY_SwapBuffers(hyWindow);
 }
 
-int main()
+// Subsystem:console
+int main(int argc, char *argv[])
 {
     HY_LogInit(false);
-    
-    LPWSTR *szArglist;
-    int nArgs;
-    int i;
-    
-    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
-    if( NULL == szArglist ) {
-        wprintf(L"CommandLineToArgvW failed\n");
-        return 0;
-    }
-    else {
-        for( i=0; i<nArgs; i++) printf("%d: %ws\n", i, szArglist[i]);
-    }
-    
-    LocalFree(szArglist); // Free memory allocated for CommandLineToArgvW arguments.
     
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
@@ -283,7 +269,32 @@ int main()
     ExitProcess(0);
 }
 
+// Subsystem:windows
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    return main();
+    HY_INFO("asd");
+    printf("Asd");
+    // Read cmd args.
+    LPWSTR* argv;
+    int argc;
+    int i;
+    
+    //argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    argv = CommandLineToArgvW(pCmdLine, &argc);
+    if( NULL == argv ) {
+        printf("CommandLineToArgvW failed\n");
+        return 0;
+    }
+    else {
+        for( i=0; i<argc; i++) {
+            printf("%d: %ws\n", i, argv[i]);
+        }
+    }
+    
+    // TODO(alex): How tf do u use windows types?
+    int result = main(argc, NULL);
+    
+    LocalFree(argv); // Free memory allocated for CommandLineToArgvW arguments.
+    
+    return result;
 }
