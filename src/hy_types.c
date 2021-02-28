@@ -4,6 +4,7 @@
 /// @brief Commond type definitions and defines used by the engine.
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef int8_t  s8;
 typedef int16_t s16;
@@ -18,10 +19,7 @@ typedef uint64_t u64;
 typedef float r32;
 typedef double r64;
 
-typedef int b32;
-
-#define true 1
-#define false 0
+typedef bool b32;
 
 #define Pi32 3.14159265359f
 
@@ -43,7 +41,8 @@ typedef int b32;
 #define HY_FASSERT(x) if (!(x)) { *(int*)0 = 0; }
 #define HY_ASSERT(x, __VA_ARGS__) if (!(x)) { if (IsDebuggerPresent()) __debugbreak(); else { HY_ERROR("Assertion failed but no debugger is attached." __VA_ARGS__); *(int*)0 = 0; } }
 #else // HY_SLOW
-#define HY_ASSERT(x)
+#define HY_FASSERT(...)
+#define HY_ASSERT(...)
 #endif // HY_SLOW
 
 #define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))

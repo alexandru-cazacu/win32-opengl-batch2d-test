@@ -85,6 +85,7 @@ internal void HY_Log(const char* msg, const char* file, int line, const char* co
 #define HY_ERROR(...)
 #define HY_FATAL(...)
 
-internal void HY_InitLog() {}
+internal void HY_LogInit() {}
+internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level) {}
 
 #endif // HY_ENABLE_LOG

@@ -828,8 +828,9 @@ typedef struct
 
 internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFilePath)
 {
-    DebugReadFileResult vShaderCode = DEBUGPlatformReadEntireFile(vertFilePath);
-    DebugReadFileResult fShaderCode = DEBUGPlatformReadEntireFile(fragFilePath);
+    // TODO(alex): May fail.
+    HyFile* vShaderCode = HY_ReadFile(vertFilePath);
+    HyFile* fShaderCode = HY_ReadFile(fragFilePath);
     
     HyShader* shader = (HyShader*)malloc(sizeof (HyShader));
     
@@ -839,13 +840,13 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
     
     // vertex Shader
     GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    GL_CALL(glShaderSource(vertexShaderID, 1, &(char*)vShaderCode.Data, NULL));
+    GL_CALL(glShaderSource(vertexShaderID, 1, &(char*)vShaderCode->data, NULL));
     GL_CALL(glCompileShader(vertexShaderID));
     HY_Shader_CheckCompileErrors(vertexShaderID, "VERTEX");
     
     // fragment Shader
     GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-    GL_CALL(glShaderSource(fragmentShaderID, 1, &(char*)fShaderCode.Data, NULL));
+    GL_CALL(glShaderSource(fragmentShaderID, 1, &(char*)fShaderCode->data, NULL));
     GL_CALL(glCompileShader(fragmentShaderID));
     HY_Shader_CheckCompileErrors(fragmentShaderID, "FRAGMENT");
     
