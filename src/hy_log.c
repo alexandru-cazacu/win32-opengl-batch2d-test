@@ -54,9 +54,13 @@ internal void HY_Log(const char* msg, const char* file, int line, const char* co
     if (IsDebuggerPresent()) {
         OutputDebugStringA(msg);
     } else {
-        char fmtMsg[256];;
-        char dir[260];
-        char drive[260];
+        // TODO(alex): Attach console using winapi.
+        // TODO(alex): Make logs api
+        // TODO(alex): Check how to print ansi escape sequences to 4coder.
+        //char fmtMsg[256];;
+        //char dir[260];
+        //char drive[260];
+#if 0
         _splitpath_s(file, drive, 260, dir, 260, NULL, 0, NULL, 0);
         int offset = (int)strlen(drive) + (int)strlen(dir);
         int fileLen = (int)strlen(file) - offset;
@@ -67,6 +71,7 @@ internal void HY_Log(const char* msg, const char* file, int line, const char* co
                  fileLen, file + offset, line,
                  msg);
         printf(fmtMsg);
+#endif
     }
 }
 

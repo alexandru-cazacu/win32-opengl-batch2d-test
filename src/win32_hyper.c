@@ -1,4 +1,60 @@
-#include "win32.c"
+#define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
+#include <sdkddkver.h>
+
+// Disables unused Windows functions and makes build times faster.
+// Commented out the functions we actually need.
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef WIN32_EXTRA_LEAN
+#define WIN32_EXTRA_LEAN // TODO(alex): Check if it really does something in Windows.h
+#endif
+
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN // Only for MFC, but who knows.
+#endif
+
+#define NOGDICAPMASKS
+//#define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+//#define NOCOLOR
+//#define NOCTLMGR
+#define NODRAWTEXT
+#define NOKERNEL
+#define NONLS
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOTEXTMETRIC
+#define NOWH
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX
+#define NORPC
+#define NOPROXYSTUB
+#define NOIMAGE
+#define NOTAPE
+#define NOMINMAX
+#define STRICT
+
+#include <windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+#include <shellapi.h>
 #include <gl/gl.h>
 #include <gl/glext.h>
 #include <gl/wglext.h>
@@ -8,13 +64,13 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
-#include "resources.h"
 #include "hy_types.c"
 #include "hy_log.c"
+#include "resources.h"
 #include "hy_file.c"
-#include "hy_renderer_2d.c"
-#include "hy_window.c"
 #include "hy_time.c"
+#include "win32_renderer_opengl.c"
+#include "win32_window.c"
 
 #pragma warning(disable:4996)
 #include "ini.h"
@@ -63,7 +119,7 @@ internal int configHandler(void* user, const char* section, const char* name, co
     return 1;
 }
 
-void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
+internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
     printf("Resize callback (%d, %d)\n", width, height);
     glViewport(0, 0, width, height);
@@ -75,6 +131,21 @@ void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 int main()
 {
     HY_LogInit(false);
+    
+    LPWSTR *szArglist;
+    int nArgs;
+    int i;
+    
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if( NULL == szArglist ) {
+        wprintf(L"CommandLineToArgvW failed\n");
+        return 0;
+    }
+    else {
+        for( i=0; i<nArgs; i++) printf("%d: %ws\n", i, szArglist[i]);
+    }
+    
+    LocalFree(szArglist); // Free memory allocated for CommandLineToArgvW arguments.
     
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
@@ -208,6 +279,7 @@ int main()
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
     
+    FreeConsole();
     ExitProcess(0);
 }
 

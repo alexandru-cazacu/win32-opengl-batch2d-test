@@ -34,18 +34,20 @@ load_paths = {
 command_list = {
     {
         .name = "build-debug",
-        .out = "*build-debug*",
+        .out = "*compilation*",
         .footer_panel = true,
         .save_dirty_files = true,
+        .cursor_at_end = false,
         .cmd = {
             { ".\build-debug.bat" , .os = "win" },
         },
     },
 {
         .name = "run-debug",
-        .out = "*run-debug*",
+        .out = "*compilation*",
         .footer_panel = true,
         .save_dirty_files = false,
+        .cursor_at_end = false,
         .cmd = {
             { ".\bin\Win-x64-Debug\Hyped.exe", .os = "win"   },
         },
@@ -55,6 +57,7 @@ command_list = {
         .out = "*build-release*",
         .footer_panel = true,
         .save_dirty_files = true,
+        .cursor_at_end = false,
         .cmd = {
             { ".\build-release.bat --release" , .os = "win"   },
         },
@@ -64,6 +67,7 @@ command_list = {
         .out = "*run-release*",
         .footer_panel = true,
         .save_dirty_files = false,
+        .cursor_at_end = false,
         .cmd = {
             { ".\bin\Win-x64-Release\Hyped.exe", .os = "win"   },
         },
@@ -73,6 +77,7 @@ command_list = {
         .out = "*build-tests*",
         .footer_panel = true,
         .save_dirty_files = false,
+        .cursor_at_end = false,
         .cmd = {
             { ".\build-tests.bat" , .os = "win" },
         },
@@ -82,6 +87,7 @@ command_list = {
         .out = "*run-tests*",
         .footer_panel = true,
         .save_dirty_files = false,
+        .cursor_at_end = false,
         .cmd = {
             { ".\bin\Win-x64-Tests\Hyped.exe" , .os = "win" },
         },
@@ -91,6 +97,7 @@ command_list = {
         .out = "*docs*",
         .footer_panel = true,
         .save_dirty_files = false,
+        .cursor_at_end = false,
         .cmd = {
             { "./todo", .os = "win"   },
         },

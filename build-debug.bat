@@ -2,7 +2,7 @@
 
 set prjName=Hyped
 set target=Debug
-set files=%cd%\src\main.c
+set files=%cd%\src\win32_hyper.c
 set binDir=%cd%\bin\Win-x64-%target%
 set binIntDir=%cd%\bin-int\Win-x64-%target%
 
@@ -27,7 +27,7 @@ set sharedCompilerFlags=^
     resources.res
 
 set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console -LIBPATH:%binIntDir%
-set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib
+set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
 
 call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
@@ -38,9 +38,9 @@ call .\ctime\ctime -end %prjName%_Win-x64-%target%.ctime %ERRORLEVEL%
 echo Program terminated with code %ERRORLEVEL%.
 EXIT /B %ERRORLEVEL%
 
-:: ======================================================================
-:: Compiler Flags
-:: ======================================================================
+:: ╔════════════════╗
+:: ║ Compiler Flags ║
+:: ╚════════════════╝
 
 :: Optimization
 :: Oi            Generates intrinsic functions.
@@ -62,17 +62,17 @@ EXIT /B %ERRORLEVEL%
 :: W4            Sets output warning level.
 :: wd<nnn>       Disables the specified warning.
 
-:: ======================================================================
-:: Compiler Warnings 
-:: ======================================================================
+:: ╔═══════════════════╗
+:: ║ Compiler Warnings ║
+:: ╚═══════════════════╝
 
 :: 4201 nonstandard extension used : nameless struct/union
 :: 4100 'identifier' : unreferenced formal parameter
 :: 4189 'identifier' : local variable is initialized but not referenced (will be optimized away by the compiler).
 
-:: ======================================================================
-:: Linker Options
-:: ======================================================================
+:: ╔══════════════╗
+:: ║ Linker Flags ║
+:: ╚══════════════╝
 
 :: incremental:no Controls incremental linking (disabled).
 :: opt:ref        Controls LINK optimizations (remove non referenced functions and data).

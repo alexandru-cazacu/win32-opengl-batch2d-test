@@ -396,197 +396,54 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
         return HY_NOT_INITIALIZED;
     }
     
-    // https://devblogs.microsoft.com/oldnewthing/?p=1593
     WNDCLASSA window_class = {0};
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     window_class.lpfnWndProc = Win32WndProc;
     window_class.hInstance = GetModuleHandle(NULL);
     window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
     window_class.hIcon = LoadIcon(window_class.hInstance, MAKEINTRESOURCE(101));
-    window_class.hbrBackground = CreateSolidBrush(RGB(25, 25, 25));
-    //window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH + 1);
-    //window_class.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    //window_class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    //window_class.hbrBackground = NULL;
-    //window_class.hbrBackground = COLOR_WINDOW;
     window_class.lpszClassName = "HyperWindowClass";
+    window_class.hbrBackground = CreateSolidBrush(RGB(25, 25, 25));
     
     RegisterClassA(&window_class);
     
-    // NOTE(alex): It's dangerous to go alone. Take this: https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
-    
-    HWND fakeWND = CreateWindow("HyperWindowClass", "Fake Window", // window class, title
-                                (DWORD)StyleAeroBorderless,        // style
-                                //WS_OVERLAPPEDWINDOW,        // style
-                                0, 0, 0, 0,                        // x, y, width, height
-                                NULL, NULL,                        // parent window, menu
-                                window_class.hInstance, 0);        // instance, param
-    
     hyWindow->windowClass = window_class;
     
-    HDC fakeDC = GetDC(fakeWND); // Device Context
-    
-    PIXELFORMATDESCRIPTOR fakePFD = {0};
-    ZeroMemory(&fakePFD, sizeof(fakePFD));
-    fakePFD.nSize = sizeof(fakePFD);
-    fakePFD.nVersion = 1;
-    fakePFD.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    fakePFD.iPixelType = PFD_TYPE_RGBA;
-    fakePFD.cColorBits = 32;
-    fakePFD.cAlphaBits = 8;
-    fakePFD.cDepthBits = 24;
-    
-    int fakePFDID = ChoosePixelFormat(fakeDC, &fakePFD);
-    if (fakePFDID == 0) {
-        MessageBox(NULL, "ChoosePixelFormat() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    if (SetPixelFormat(fakeDC, fakePFDID, &fakePFD) == false) {
-        MessageBox(NULL, "SetPixelFormat() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    HGLRC fakeRC = wglCreateContext(fakeDC); // Rendering Contex
-    
-    if (fakeRC == 0) {
-        MessageBox(NULL, "wglCreateContext() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    if (wglMakeCurrent(fakeDC, fakeRC) == false) {
-        MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    // Load GL extensions list
-    const char* extensions = (const char*)glGetString(GL_EXTENSIONS); 
-    size_t ext_string_length = strlen(extensions) + 1;
-    g_GlExtension= malloc(sizeof(char) * ext_string_length);
-	memcpy((void*)g_GlExtension, extensions, ext_string_length);
-    HY_INFO(g_GlExtension);
-    
-    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
-    wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)(wglGetProcAddress("wglChoosePixelFormatARB"));
-    if (wglChoosePixelFormatARB == NULL) {
-        MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
-    wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(wglGetProcAddress("wglCreateContextAttribsARB"));
-    if (wglCreateContextAttribsARB == NULL) {
-        MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
+#if 0
     HMONITOR monitor = MonitorFromWindow(fakeWND, MONITOR_DEFAULTTONEAREST);
     MONITORINFO info;
     info.cbSize = sizeof(MONITORINFO);
     GetMonitorInfo(monitor, &info);
     int width = info.rcMonitor.right - info.rcMonitor.left;
     int height = info.rcMonitor.bottom - info.rcMonitor.top;
+#endif
     
+    int width = 1920;
+    int height = 1080;
+    
+#if 0
     if (startMode == HyWindowStartMode_Auto) {
         width /= 2;
         height /= 2;
     }
-    
-#if 0
-    if (startMode == HyWindowStartMode_Fullscreen) {
-		DEVMODE dev = { 0 };
-		dev.dmSize = sizeof(DEVMODE);
-		dev.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
-		dev.dmPelsWidth = width;
-		dev.dmPelsHeight = height;
-		dev.dmBitsPerPel = 32;
-		ChangeDisplaySettings(&dev, CDS_FULLSCREEN);
-	}
 #endif
     
     hyWindow->handle = CreateWindowA(window_class.lpszClassName, title,           // class name, window name
                                      (DWORD)StyleAeroBorderless,                  // style
-                                     //(DWORD)StyleWindowed,                  // style
-                                     //WS_OVERLAPPEDWINDOW,                  // style
-                                     //WS_POPUP,                  // style
-                                     //WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_BORDER,                  // style
                                      CW_USEDEFAULT, CW_USEDEFAULT, width, height, // x, y, width, height
                                      NULL, NULL,                                  // parent window, menu
                                      window_class.hInstance, hyWindow);           // instance, param
     
     hyWindow->deviceContext = GetDC(hyWindow->handle);
     
-    const int pixelAttribs[] = {
-        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-        WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-        WGL_COLOR_BITS_ARB, 32,
-        WGL_ALPHA_BITS_ARB, 8,
-        WGL_DEPTH_BITS_ARB, 24,
-        WGL_STENCIL_BITS_ARB, 8,
-        WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
-        WGL_SAMPLES_ARB, 4,
-        0
-    };
-    
-    int pixelFormatID; UINT numFormats;
-    BOOL status = wglChoosePixelFormatARB(hyWindow->deviceContext, pixelAttribs, NULL, 1, &pixelFormatID, &numFormats);
-    
-    if (status == false || numFormats == 0) {
-        MessageBox(NULL, "wglChoosePixelFormatARB() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    PIXELFORMATDESCRIPTOR PFD;
-    DescribePixelFormat(hyWindow->deviceContext, pixelFormatID, sizeof(PFD), &PFD);
-    SetPixelFormat(hyWindow->deviceContext, pixelFormatID, &PFD);
-    
-    const int major_min = 4, minor_min = 5;
-    int  contextAttribs[] = {
-        WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
-        WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
-        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-        0
-    };
-    
-    hyWindow->renderingContext = wglCreateContextAttribsARB(hyWindow->deviceContext, 0, contextAttribs);
-    if (hyWindow->renderingContext == NULL) {
-        MessageBox(NULL, "wglCreateContextAttribsARB() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(fakeRC);
-    ReleaseDC(fakeWND, fakeDC);
-    DestroyWindow(fakeWND);
-    // NOTE(alex): Capture all messages so they don't interfere with our main message pump.
-    MSG message;
-    while (PeekMessage(&message, 0, 0, 0, PM_REMOVE));
-    
-    if (!wglMakeCurrent(hyWindow->deviceContext, hyWindow->renderingContext)) {
-        MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
-        return HY_PLATFORM_ERROR;
-    }
-    
-    int failed = HY_LoadGlFunctions();
-	if (failed > 0) {
-		printf("Failed to load %d GL functions.\n", failed);
-	}
-    
-    printf("Vendor         : %s\nRenderer       : %s\nOpenGL version : %s\nGLSL version   : %s\n", 
-           glGetString(GL_VENDOR), 
-           glGetString(GL_RENDERER), 
-           glGetString(GL_VERSION), 
-           glGetString(GL_SHADING_LANGUAGE_VERSION));
+    Win32LoadOpenGL(hyWindow->deviceContext);
     
     hyWindow->borderless = true;
     hyWindow->borderless_resize = true;
     hyWindow->borderless_drag = true;
     hyWindow->borderless_shadow = true;
     
-    SetWindowTextA(hyWindow->handle, (LPCSTR)glGetString(GL_VERSION));
+    //SetWindowTextA(hyWindow->handle, (LPCSTR)glGetString(GL_VERSION));
     
     Win32SetBorderlessShadow(hyWindow, true);
     Win32SetBorderless(hyWindow, true);

@@ -1,5 +1,6 @@
-
 //~ OpenGL Hacky loader.
+
+#pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
 
 #define glActiveTexture ((PFNGLACTIVETEXTUREPROC)gl_function_pointers[0]) 
 #define glDebugMessageCallbackAMD ((PFNGLDEBUGMESSAGECALLBACKAMDPROC)gl_function_pointers[1]) 
@@ -144,7 +145,7 @@ void* gl_function_pointers[sizeof(gl_function_names)/sizeof(const char*)];
 ///
 /// Returns the number of functions that failed to load.
 ///
-internal int HY_LoadGlFunctions() {
+internal int Win32LoadGlFunctions() {
     int failed = 0;
 	for (int i = 0; i < sizeof(gl_function_names) / sizeof(const char*); i++) {
 		const char* name = gl_function_names[i];
@@ -152,12 +153,161 @@ internal int HY_LoadGlFunctions() {
 		gl_function_pointers[i] = ptr;
 		if (ptr == NULL) {
             OutputDebugStringA("Failed");
-            fprintf(stdout, "Failed to load extension: %s\n", name);
+            //fprintf(stdout, "Failed to load extension: %s\n", name);
 			failed++;
 		}
 	}
     
     return failed;
+}
+
+// TODO(alex): Make error into enum
+internal int Win32LoadOpenGL(HDC dc)
+{
+    WNDCLASSA window_class = {0};
+    window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    window_class.lpfnWndProc = NULL;
+    window_class.hInstance = GetModuleHandle(NULL);
+    window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
+    window_class.hIcon = LoadIcon(window_class.hInstance, MAKEINTRESOURCE(101));
+    window_class.hbrBackground = CreateSolidBrush(RGB(25, 25, 25));
+    window_class.lpszClassName = "HyperWindowClass";
+    
+    RegisterClassA(&window_class);
+    
+    // NOTE(alex): It's dangerous to go alone. Take this: https://mariuszbartosik.com/opengl-4-x-initialization-in-windows-without-a-framework/
+    
+    HWND fakeWND = CreateWindow("HyperWindowClass", "Fake Window", // window class, title
+                                WS_OVERLAPPEDWINDOW,               // style
+                                0, 0, 0, 0,                        // x, y, width, height
+                                NULL, NULL,                        // parent window, menu
+                                window_class.hInstance, 0);        // instance, param
+    
+    HDC fakeDC = GetDC(fakeWND); // Device Context
+    
+    PIXELFORMATDESCRIPTOR fakePFD = {0};
+    ZeroMemory(&fakePFD, sizeof(fakePFD));
+    fakePFD.nSize = sizeof(fakePFD);
+    fakePFD.nVersion = 1;
+    fakePFD.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    fakePFD.iPixelType = PFD_TYPE_RGBA;
+    fakePFD.cColorBits = 32;
+    fakePFD.cAlphaBits = 8;
+    fakePFD.cDepthBits = 24;
+    
+    int fakePFDID = ChoosePixelFormat(fakeDC, &fakePFD);
+    if (fakePFDID == 0) {
+        MessageBox(NULL, "ChoosePixelFormat() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    if (SetPixelFormat(fakeDC, fakePFDID, &fakePFD) == false) {
+        MessageBox(NULL, "SetPixelFormat() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    HGLRC fakeRC = wglCreateContext(fakeDC); // Rendering Contex
+    
+    if (fakeRC == 0) {
+        MessageBox(NULL, "wglCreateContext() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    if (wglMakeCurrent(fakeDC, fakeRC) == false) {
+        MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    // Load GL extensions list
+    const char* extensions = (const char*)glGetString(GL_EXTENSIONS); 
+    size_t ext_string_length = strlen(extensions) + 1;
+    g_GlExtension= VirtualAlloc(0, sizeof(char) * ext_string_length, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	memcpy((void*)g_GlExtension, extensions, ext_string_length);
+    HY_INFO(g_GlExtension);
+    
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
+    wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)(wglGetProcAddress("wglChoosePixelFormatARB"));
+    if (wglChoosePixelFormatARB == NULL) {
+        MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
+    wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(wglGetProcAddress("wglCreateContextAttribsARB"));
+    if (wglCreateContextAttribsARB == NULL) {
+        MessageBox(NULL, "wglGetProcAddress() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    const int pixelAttribs[] = {
+        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+        WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB, 32,
+        WGL_ALPHA_BITS_ARB, 8,
+        WGL_DEPTH_BITS_ARB, 24,
+        WGL_STENCIL_BITS_ARB, 8,
+        WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+        WGL_SAMPLES_ARB, 4,
+        0
+    };
+    
+    int pixelFormatID; UINT numFormats;
+    BOOL status = wglChoosePixelFormatARB(dc, pixelAttribs, NULL, 1, &pixelFormatID, &numFormats);
+    
+    if (status == false || numFormats == 0) {
+        MessageBox(NULL, "wglChoosePixelFormatARB() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    PIXELFORMATDESCRIPTOR PFD;
+    DescribePixelFormat(dc, pixelFormatID, sizeof(PFD), &PFD);
+    SetPixelFormat(dc, pixelFormatID, &PFD);
+    
+    const int major_min = 4, minor_min = 5;
+    int  contextAttribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
+        WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+    
+    HGLRC rc = wglCreateContextAttribsARB(dc, 0, contextAttribs);
+    if (rc == NULL) {
+        MessageBox(NULL, "wglCreateContextAttribsARB() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(fakeRC);
+    ReleaseDC(fakeWND, fakeDC);
+    DestroyWindow(fakeWND);
+    // NOTE(alex): Capture all messages so they don't interfere with our main message pump.
+    MSG message;
+    while (PeekMessage(&message, 0, 0, 0, PM_REMOVE));
+    
+    if (!wglMakeCurrent(dc, rc)) {
+        MessageBox(NULL, "wglMakeCurrent() failed.", "Hyper Error", MB_ICONERROR);
+        return HY_PLATFORM_ERROR;
+    }
+    
+    int failed = Win32LoadGlFunctions();
+	if (failed > 0) {
+		//printf("Failed to load %d GL functions.\n", failed);
+        //__debugbreak();
+	}
+    
+#if 0
+    printf("Vendor         : %s\nRenderer       : %s\nOpenGL version : %s\nGLSL version   : %s\n", 
+           glGetString(GL_VENDOR), 
+           glGetString(GL_RENDERER), 
+           glGetString(GL_VERSION), 
+           glGetString(GL_SHADING_LANGUAGE_VERSION));
+#endif
+    
+    return HY_NO_ERROR;
 }
 
 //~ OpenGL Error handling
@@ -183,7 +333,7 @@ internal int GLLogCall(const char* function, const char* file, int line)
         }
         char msg[256];
         // TODO(alex): Fix, make a usable logging function.
-        snprintf(msg, 256, "[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
+        //snprintf(msg, 256, "[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
         HY_ERROR(msg);
         return false;
     }
