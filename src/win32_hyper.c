@@ -116,18 +116,46 @@ internal int configHandler(void* user, const char* section, const char* name, co
 
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
-    //glViewport(0, 0, width, height);
-    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT);
-    //HY_SwapBuffers(hyWindow);
-    
+    // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -100.0f, 0.0f);
+    //GL_CALL(glViewport(0, 0, width, height));
+}
+
+static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
+{
+    static unsigned long long _previousTotalTicks = 0;
+    static unsigned long long _previousIdleTicks = 0;
+    
+    unsigned long long totalTicksSinceLastTime = totalTicks-_previousTotalTicks;
+    unsigned long long idleTicksSinceLastTime  = idleTicks-_previousIdleTicks;
+    
+    float ret = 1.0f-((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime)/totalTicksSinceLastTime : 0);
+    
+    _previousTotalTicks = totalTicks;
+    _previousIdleTicks  = idleTicks;
+    return ret;
+}
+
+internal unsigned long long FileTimeToInt64(FILETIME ft)
+{
+    return (((unsigned long long)(ft.dwHighDateTime))<<32) | ((unsigned long long)ft.dwLowDateTime);
+}
+
+
+// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
+// You'll need to call this at regular intervals, since it measures the load between
+// the previous call and the current one.  Returns -1.0 on error.
+float GetCPULoad()
+{
+    FILETIME idleTime, kernelTime, userTime;
+    return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime)+FileTimeToInt64(userTime)) : -1.0f;
 }
 
 // Subsystem:console
 int main(int argc, char *argv[])
 {
     HY_LogInit();
+    HY_Timer_Init();
     
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
@@ -147,79 +175,89 @@ int main(int argc, char *argv[])
     HY_CreateWindow(&window, config.startMode, "Hyped");
     
     if (!&window) {
-        MessageBox(NULL, "Failed to create window.", "Hyper Error", MB_ICONERROR);
+        MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
         ExitProcess(0);
     }
     
     camera2D = HyCamera2D_Create(1920, 1080, 0, 1);
-    HyShader* simpleVert = HY_Shader_Create("assets/shaders/simple.vert", "assets/shaders/simple.frag");
     
     HyRenderer2D renderer = {0};
     HyRenderer2D_Init(&renderer);
     
-#if 0
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    float vertices[] = {
-        -1.0f, 0.85f, 0.0f, // left  
-        1.0f, 1.0f, 0.0f, // right 
-        -1.0f,  1.0f, 0.0f  // top   
-    }; 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+    vec4 bg0 = { 0.157f, 0.157f, 0.157f, 1.0f };
+    vec4 bg1 = { 0.235f, 0.22f, 0.212f, 1.0f };
+    vec4 red0 = { 0.8f, 0.141f, 0.114f, 1.0f };
+    vec4 red1 = { 0.984f, 0.286f, 0.204f, 1.0f };
+    vec4 green0 = { 0.596f, 0.592f, 0.102f, 1.0f };
+    vec4 green1 = { 0.722f, 0.733f, 0.149f, 1.0f };
+    vec4 blue0 = { 0.271f, 0.522f, 0.533f, 1.0f };
+    vec4 blue1 = { 0.514f, 0.647f, 0.596f, 1.0f };
+    float pad = 15.0f;
+    float border = 3.0f;
+    float ch = 35.0f;
     
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0); 
-#endif
+    float lastTime = 0.0f;
     
     while (!HY_WindowShouldClose(&window)) {
-        //glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
-        //glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // rgb(33,150,243)
-        //glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // rgb(33,150,243)
-        //glClear(GL_COLOR_BUFFER_BIT);
-        
-        HY_SetClearColorCmd(&(HyColor){0.1f, 0.1f, 0.1f, 0.1f});
-        HY_ClearCmd();
-        
-        
-        //HY_Shader_Bind(simpleVert);
-        //glUseProgram(shaderProgram);
-        //glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-        //DrawQuad(&renderer, (vec3){0.0f, 0.0f, 0.0f}, (vec2){1.0f, 1.0f}, 
+        float currTime = HY_Timer_GetMilliseconds();
+        float dt = currTime - lastTime;
         
         HyRenderer2D_ResetStats(&renderer);
         HyRenderer2D_BeginScene(&renderer, &camera2D);
-        DrawQuad3C(&renderer, (vec3){0.0f, 0.0f, 0.0f}, (vec2){1920.0f, 100.0f}, (vec4){1.0f, 0.0f, 1.0f, 1.0f});
+        {
+            vec2 pointer = { border + pad, 1000.0f - pad - border - ch };
+            
+            HY_SetClearColorCmd(&(HyColor){0.0f, 0.0f, 0.0f, 1.0f});
+            //HY_SetClearColorCmd(&(HyColor){0.1f, 0.1f, 0.1f, 0.1f});
+            HY_ClearCmd();
+            
+            static int count = 0;
+            static float cpuLoad = 0.0f;
+            static float currCpuLoad = 0.0f;
+            static float currDt  = 0.0f;
+            
+            if (count % 60 == 0) {
+                cpuLoad = (float)GetCPULoad();
+            }
+            
+            HY_INFO("%f %f %f", cpuLoad, currCpuLoad, (cpuLoad - currCpuLoad));
+            currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f) * dt;
+            currDt += (dt - currDt) * (dt / 1000.0f);
+            
+            DrawQuad2C(&renderer, (vec3){ 0.0f, 0.0f }, (vec2){ 400.0f, 1000.0f }, bg1);
+            DrawQuad2C(&renderer, (vec3){ border, border }, (vec2){ 400.0f - border * 2.0f, 1000.0f - border * 2.0f }, bg0);
+            
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, red0);
+            DrawQuad2C(&renderer, pointer, (vec2){ 150.0f, ch }, red1);
+            pointer[1] -= (pad + ch);
+            
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, green0);
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f / 32.0f * currDt, ch }, green1);
+            pointer[1] -= (pad + ch);
+            
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, blue0);
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f * currCpuLoad, ch }, blue1);
+            pointer[1] -= (pad + ch);
+            
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, bg1);
+            DrawQuad2C(&renderer, (vec2){ pointer[0] + border, pointer[1] + border }, (vec2){ 250.0f - border * 2.0f, ch - border * 2.0f }, bg0);
+            pointer[1] -= (pad + ch);
+            
+            count++;
+        }
         HyRenderer2D_EndScene(&renderer);
         
         HY_SwapBuffers(&window);
         
         HY_PollEvents(&window);
         
+        lastTime = currTime;
+        
         Sleep(1);
     }
-    
-#if 0
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    HY_Shader_Delete(simpleVert);
-#endif
     
     ExitProcess(0);
 }

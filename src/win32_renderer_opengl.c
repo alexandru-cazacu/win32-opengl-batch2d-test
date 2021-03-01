@@ -1161,7 +1161,7 @@ internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer);
 internal void HY_Renderer2D_ResetStats(HyRenderer2D* renderer);
 
 internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color);
-internal void DrawQuad2C(HyRenderer2D* renderer, vec2* pos, vec2* size, vec4* color);
+internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, vec4 color);
 //internal void DrawQuad3T(HyRenderer2D* renderer, vec3* pos, vec2* size, uint32_t textureID);
 internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t textureID);
 
@@ -1418,10 +1418,10 @@ internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t
     //DrawQuad3T(renderer, &temp, size, textureID);
 }
 
-internal void DrawQuad2C(HyRenderer2D* renderer, vec2* pos, vec2* size, vec4* color)
+internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, vec4 color)
 {
-    //vec3 tempPos = { pos->x, pos->y, 1.0f };
-    //DrawQuad3C(renderer, &tempPos, size, color);
+    vec3 tempPos = { pos[0], pos[1], 0.0f };
+    DrawQuad3C(renderer, tempPos, size, color);
 }
 
 internal void HY_SetClearColorCmd(HyColor* color)
