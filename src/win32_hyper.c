@@ -116,7 +116,6 @@ internal int configHandler(void* user, const char* section, const char* name, co
 
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
-    printf("Resize callback (%d, %d)\n", width, height);
     //glViewport(0, 0, width, height);
     //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     //glClear(GL_COLOR_BUFFER_BIT);
@@ -128,7 +127,7 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
 // Subsystem:console
 int main(int argc, char *argv[])
 {
-    HY_LogInit(false);
+    HY_LogInit();
     
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
@@ -136,10 +135,9 @@ int main(int argc, char *argv[])
     HyFile* configFile = HY_ReadFile(".hypedrc");
     if (configFile) {
         ini_parse_string(configFile->data, configHandler, &config);
-        fprintf(stdout,
-                "Config loaded from '.hypedrc': \n - startMode=%d\n - user=%s\n",
-                config.startMode,
-                config.user);
+        HY_INFO("Config loaded from '.hypedrc'");
+        HY_INFO("  - startMode=%d", config.startMode);
+        HY_INFO("  - user=%s", config.user);
     } else {
         HY_ERROR(".hypedrc not found");
     }
@@ -237,12 +235,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     //argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     argv = CommandLineToArgvW(pCmdLine, &argc);
     if( NULL == argv ) {
-        printf("CommandLineToArgvW failed\n");
+        HY_INFO("CommandLineToArgvW failed\n");
         return 0;
     }
     else {
         for( i=0; i<argc; i++) {
-            printf("%d: %ws\n", i, argv[i]);
+            HY_INFO("%d: %ws\n", i, argv[i]);
         }
     }
     

@@ -254,7 +254,7 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 int width = LOWORD(lParam);  // Macro to get the low-order word.
                 int height = HIWORD(lParam); // Macro to get the high-order word.
                 InvalidateRect(hwnd, NULL, TRUE);
-                printf("Resize: (%d, %d)\n", width, height);
+                HY_INFO("Resize: (%d, %d)", width, height);
                 if (hyWindow->sizeCallback) {
                     hyWindow->sizeCallback(hyWindow, width, height);
                 }

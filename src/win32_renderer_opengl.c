@@ -152,8 +152,7 @@ internal int Win32LoadGlFunctions() {
 		void* ptr = GetAnyGLFuncAddress(name);
 		gl_function_pointers[i] = ptr;
 		if (ptr == NULL) {
-            OutputDebugStringA("Failed");
-            //fprintf(stdout, "Failed to load extension: %s\n", name);
+            HY_ERROR("Failed to load extension: %s", name);
 			failed++;
 		}
 	}
@@ -223,7 +222,7 @@ internal int Win32LoadOpenGL(HDC dc)
     size_t ext_string_length = strlen(extensions) + 1;
     g_GlExtension= VirtualAlloc(0, sizeof(char) * ext_string_length, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	memcpy((void*)g_GlExtension, extensions, ext_string_length);
-    HY_INFO(g_GlExtension);
+    HY_TRACE(g_GlExtension);
     
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
     wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)(wglGetProcAddress("wglChoosePixelFormatARB"));
@@ -295,17 +294,13 @@ internal int Win32LoadOpenGL(HDC dc)
     
     int failed = Win32LoadGlFunctions();
 	if (failed > 0) {
-		//printf("Failed to load %d GL functions.\n", failed);
-        //__debugbreak();
+		HY_ERROR("Failed to load %d GL functions.", failed);
 	}
     
-#if 0
-    printf("Vendor         : %s\nRenderer       : %s\nOpenGL version : %s\nGLSL version   : %s\n", 
-           glGetString(GL_VENDOR), 
-           glGetString(GL_RENDERER), 
-           glGetString(GL_VERSION), 
-           glGetString(GL_SHADING_LANGUAGE_VERSION));
-#endif
+    HY_INFO("Vendor         : %s", glGetString(GL_VENDOR));
+    HY_INFO("Renderer       : %s", glGetString(GL_RENDERER));
+    HY_INFO("OpenGL version : %s", glGetString(GL_VERSION));
+    HY_INFO("GLSL version   : %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
     
     return HY_NO_ERROR;
 }
@@ -331,16 +326,13 @@ internal int GLLogCall(const char* function, const char* file, int line)
             case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
             case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
         }
-        char msg[256];
-        // TODO(alex): Fix, make a usable logging function.
-        //snprintf(msg, 256, "[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
-        HY_ERROR(msg);
+        HY_ERROR("[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
         return false;
     }
     return true;
 }
 
-#define ASSERT(x) if (!(x)) { printf("Assert!\n"); __debugbreak(); }
+#define ASSERT(x) if (!(x)) { HY_FATAL("Assert!\n"); __debugbreak(); }
 #define GL_CALL(x) GLClearError(); x; ASSERT(GLLogCall(#x, __FILE__, __LINE__))
 
 internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
@@ -385,15 +377,10 @@ internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id
         case GL_DEBUG_SEVERITY_NOTIFICATION: severityMessage = "notification"; break;
     }
     
-    char msg[256];
-    // TODO(alex): Fix, make usable logging function.
-#if 0
-    snprintf(msg, 256, "[glDebugOutput] (%d): %s\n"
+    HY_ERROR("[glDebugOutput] (%d): %s"
              "  Source: %s\n"
              "  Type: %s\n"
              "  Severity: %s\n", id, message, sourceMessage, typeMessage, severityMessage);
-#endif
-    OutputDebugStringA(msg);
 }
 
 //~ Colors
