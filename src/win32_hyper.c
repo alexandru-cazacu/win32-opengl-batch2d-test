@@ -60,14 +60,15 @@
 #include <gl/wglext.h>
 
 #pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
-#pragma warning(disable:4996) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable:4996) // // TODO(alex): What error
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 
+#pragma warning(disable:4459) // TODO(alex): What error
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize.h>
+//#include <stb_image_resize.h>
 
 #include "hy_types.c"
 #include "hy_log.c"
