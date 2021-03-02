@@ -17,6 +17,7 @@ struct HyWindow
     HGLRC renderingContext;
     WNDCLASSA windowClass;
     WINDOWPLACEMENT prevPos;
+    fglOpenGLContext glContext;
     b32 fullscreen;
     window_size_callback_t sizeCallback;
 };
@@ -434,16 +435,47 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
                                      NULL, NULL,                                  // parent window, menu
                                      window_class.hInstance, hyWindow);           // instance, param
     
+    MSG message;
+    while (PeekMessageA(&message, 0, 0, 0, PM_REMOVE));
+    
     hyWindow->deviceContext = GetDC(hyWindow->handle);
     
-    Win32LoadOpenGL(hyWindow->deviceContext);
+    if (!fglLoadOpenGL(false)) {
+        HY_FATAL("Failed to load OpenGL!");
+    }
+    
+    HY_INFO("Loaded OpenGL");
+    
+    fglOpenGLContextCreationParameters contextCreationParams = {0};
+    contextCreationParams.windowHandle.win32.deviceContext = hyWindow->deviceContext;
+    
+	// Create context and load opengl functions
+	if (!fglCreateOpenGLContext(&contextCreationParams, &hyWindow->glContext)) {
+        HY_FATAL("Failed to load OpenGL functions!");
+	}
+    
+    fglLoadOpenGLFunctions();
+    
+    HY_INFO("Loaded OpenGL functions");
+    
+    // Load GL extensions list
+    const char* extensions = (const char*)glGetString(GL_EXTENSIONS); 
+    size_t ext_string_length = strlen(extensions) + 1;
+    g_GlExtension= VirtualAlloc(0, sizeof(char) * ext_string_length, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	memcpy((void*)g_GlExtension, extensions, ext_string_length);
+    HY_TRACE(g_GlExtension);
+    
+    HY_INFO("Vendor         : %s", glGetString(GL_VENDOR));
+    HY_INFO("Renderer       : %s", glGetString(GL_RENDERER));
+    HY_INFO("OpenGL version : %s", glGetString(GL_VERSION));
+    HY_INFO("GLSL version   : %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
     
     hyWindow->borderless = true;
     hyWindow->borderless_resize = true;
     hyWindow->borderless_drag = true;
     hyWindow->borderless_shadow = true;
     
-    //SetWindowTextA(hyWindow->handle, (LPCSTR)glGetString(GL_VERSION));
+    SetWindowTextA(hyWindow->handle, (LPCSTR)glGetString(GL_VERSION));
     
     Win32SetBorderlessShadow(hyWindow, true);
     Win32SetBorderless(hyWindow, true);
@@ -457,4 +489,11 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
     }
     
     return HY_NO_ERROR;
+}
+
+internal void HY_DestroyWindow(HyWindow* hyWindow)
+{
+    // TODO(alex): Destroy win32 window
+    fglDestroyOpenGLContext(&hyWindow->glContext);
+    fglUnloadOpenGL();
 }

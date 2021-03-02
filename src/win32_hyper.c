@@ -55,16 +55,16 @@
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <shellapi.h>
-#include <gl/gl.h>
-#include <gl/glext.h>
-#include <gl/wglext.h>
 
 #pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
 #pragma warning(disable:4996) // // TODO(alex): What error
+#pragma warning(disable:4459) // TODO(alex): What error
+
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 
-#pragma warning(disable:4459) // TODO(alex): What error
+#define FGL_IMPLEMENTATION
+#include <final_dynamic_opengl.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -78,8 +78,6 @@
 #include "win32_renderer_opengl.c"
 #include "win32_window.c"
 
-#pragma warning(disable:4996)
-#include "ini.h"
 #include "ini.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
@@ -211,7 +209,6 @@ int main(int argc, char *argv[])
             vec2 pointer = { border + pad, 1000.0f - pad - border - ch };
             
             HY_SetClearColorCmd(&(HyColor){0.0f, 0.0f, 0.0f, 1.0f});
-            //HY_SetClearColorCmd(&(HyColor){0.1f, 0.1f, 0.1f, 0.1f});
             HY_ClearCmd();
             
             static int count = 0;
@@ -223,7 +220,6 @@ int main(int argc, char *argv[])
                 cpuLoad = (float)GetCPULoad();
             }
             
-            HY_INFO("%f %f %f", cpuLoad, currCpuLoad, (cpuLoad - currCpuLoad));
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f) * dt;
             currDt += (dt - currDt) * (dt / 1000.0f);
             
