@@ -51,6 +51,43 @@
 #define NOMINMAX
 #define STRICT
 
+#if 0
+#define malloc(x) hy_malloc(x)
+#define calloc(x, y) hy_calloc(x, y)
+#define realloc(x, y) hy_realloc(x, y)
+#define free(x) hy_free(x)
+
+// TODO(alex): Replace VirtualAlloc with malloc
+// TODO(alex): Create memory allocator that overrides malloc
+// TODO(alex): Log malloc/free calls
+// TODO(alex): Plot memory usage as a chart.
+
+void* hy_malloc(size_t nbytes)
+{
+    /* Do your magic here! */
+    //printf("malloc");
+}
+
+void* hy_calloc(size_t count, size_t nbytes)
+{
+    /* Do your magic here! */
+    //printf("calloc");
+}
+
+void* hy_realloc(void* p, size_t nbytes)
+{
+    /* Do your magic here! */
+    //printf("realloc");
+}
+
+void hy_free(void *p)
+{
+    /* Do your magic here! */
+    //printf("free");
+}
+#endif
+
+
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -182,9 +219,15 @@ int main(int argc, char *argv[])
     HyRenderer2D renderer = {0};
     HyRenderer2D_Init(&renderer);
     
+    HyTexture testTexture = {0};
+    HyTexture testTexture1 = {0};
+    HyTexture_Create(&testTexture, "assets/textures/container.png", HyTextureFilterMode_Linear);
+    HyTexture_Create(&testTexture1, "assets/textures/container_specular.png", HyTextureFilterMode_Linear);
+    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
+    vec4 white = { 1.0f, 1.0f, 1.0f, 0.5f };
     vec4 bg0 = { 0.157f, 0.157f, 0.157f, 1.0f };
     vec4 bg1 = { 0.235f, 0.22f, 0.212f, 1.0f };
     vec4 red0 = { 0.8f, 0.141f, 0.114f, 1.0f };
@@ -220,6 +263,15 @@ int main(int argc, char *argv[])
                 cpuLoad = (float)GetCPULoad();
             }
             
+            DrawQuad3TC(&renderer, (vec3){500.0f, 300.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture, white);
+            DrawQuad3TC(&renderer, (vec3){800.0f, 200.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture1, red0);
+            
+            for (uint32_t y = 0; y < 10; ++y) {
+                for (uint32_t x = 0; x < 10; ++x) {
+                    DrawQuad3TC(&renderer, (vec3){500 + x * 30.0f, y * 30.0f, 0.0f}, (vec2){25.0f, 25.0f}, &testTexture, green1);
+                }
+            }
+            
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f) * dt;
             currDt += (dt - currDt) * (dt / 1000.0f);
             
@@ -245,6 +297,9 @@ int main(int argc, char *argv[])
             count++;
         }
         HyRenderer2D_EndScene(&renderer);
+        
+        HyRenderer2DStats stats = HyRenderer2D_GetStats(&renderer);
+        HY_INFO("Renderer Draws: %d Quads: %d", stats.drawCount, stats.quadCount);
         
         HY_SwapBuffers(&window);
         
@@ -279,9 +334,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
     
     // TODO(alex): How tf do u use windows types?
-    int result = main(argc, NULL);
+    return main(argc, NULL);
     
-    LocalFree(argv); // Free memory allocated for CommandLineToArgvW arguments.
+    //LocalFree(argv); // Free memory allocated for CommandLineToArgvW arguments.
     
-    return result;
+    //return result;
 }

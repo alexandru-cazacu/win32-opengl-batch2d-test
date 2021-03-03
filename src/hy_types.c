@@ -59,6 +59,13 @@ inline u32 SafeTruncateU64(u64 value)
     return result;
 }
 
+typedef enum HyError
+{
+    HY_NO_ERROR,
+    HY_NOT_INITIALIZED,
+    HY_PLATFORM_ERROR
+} HyError;
+
 #define HY_NO_ERROR   0
 #define HY_NOT_INITIALIZED   0x00010001
 #define HY_PLATFORM_ERROR   0x00010008

@@ -105,18 +105,18 @@ typedef struct
 
 typedef enum HyTextureFilterMode
 {
-    Linear,
-    Nearest
+    HyTextureFilterMode_Linear,
+    HyTextureFilterMode_Nearest
 } HyTextureFilterMode;
 
-internal int HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilterMode filter)
+internal HyError HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilterMode filter)
 {
     // TODO(alex): Make Linear the default filter mode?
     
     // TODO(alex): Move in asset manager initialization.
     stbi_set_flip_vertically_on_load(true);
     
-    int result = 1;
+    HyError result = HY_NO_ERROR;
     unsigned int textureID;
     GL_CALL(glGenTextures(1, &textureID));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, textureID));
@@ -124,12 +124,12 @@ internal int HyTexture_Create(HyTexture* texture, const char* path, HyTextureFil
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
     
-    if (filter == Linear)
+    if (filter == HyTextureFilterMode_Linear)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
-    if (filter == Nearest)
+    if (filter == HyTextureFilterMode_Nearest)
     {
         GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
         GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
@@ -848,17 +848,9 @@ typedef struct
 
 internal void HyRenderer2D_Init(HyRenderer2D* renderer);
 internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer);
-//internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera);
+internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera);
 internal void HyRenderer2D_EndScene(HyRenderer2D* renderer);
 internal void HyRenderer2D_Flush(HyRenderer2D* renderer);
-
-internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer);
-internal void HY_Renderer2D_ResetStats(HyRenderer2D* renderer);
-
-internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color);
-internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, vec4 color);
-//internal void DrawQuad3T(HyRenderer2D* renderer, vec3* pos, vec2* size, uint32_t textureID);
-internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t textureID);
 
 internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer)
 {
@@ -943,6 +935,8 @@ internal void HyRenderer2D_Init(HyRenderer2D* renderer)
     renderer->textureShader = HY_Shader_Create("./assets/shaders/Batch 2D.vert", "./assets/shaders/Batch 2D.frag");
     HY_Shader_Bind(renderer->textureShader);
     
+    renderer->whiteTextureSlot = 0;
+    
     renderer->textureSlots[renderer->whiteTextureSlot] = renderer->whiteTexture;
     for (size_t i = 1; i < renderer->maxTextures; ++i)
     {
@@ -965,7 +959,6 @@ internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
 
 internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
 {
-    // TODO(alex): Camera default to NULL;
     if (camera) {
         renderer->camera = camera;
     }
@@ -984,7 +977,7 @@ internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera
     {
         samplers[i] = i; // TODO(alex): zero?
     }
-    //GL_CALL(glUniform1iv(loc, 32, samplers));
+    GL_CALL(glUniform1iv(loc, 32, samplers));
 }
 
 internal void HyRenderer2D_EndScene(HyRenderer2D* renderer)
@@ -1001,7 +994,10 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
 {
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i)
     {
-        //glBindTextureUnit(i, renderer->textureSlots[i]);
+        GL_CALL(glBindTextureUnit(i, renderer->textureSlots[i]));
+        //GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
+        //GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->textureSlots[i]));
+        // TODO(alex): What is the difference between the separate calls and the single one?
     }
     
     GL_CALL(glBindVertexArray(renderer->vao));
@@ -1009,13 +1005,11 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
     renderer->stats.drawCount++;
 }
 
-internal void DrawQuad(HyRenderer2D* renderer, const vec3* pos, const vec2* size, uint32_t textureID, vec4* color)
+internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, vec4 color)
 {
-#if 0
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
-    if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31)
-    {
+    if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31) {
     	HyRenderer2D_EndScene(renderer);
     	HyRenderer2D_BeginScene(renderer, NULL);
     }
@@ -1023,50 +1017,46 @@ internal void DrawQuad(HyRenderer2D* renderer, const vec3* pos, const vec2* size
     float textureIndex = 0.0f;
     // Skip first 1x1 white texture
     // hHecks if current texture was used to render another quad.
-    for (uint32_t i = 1; i < renderer->textureSlotIndex; ++i)
-    {
-    	if (renderer->textureSlots[i] == textureID)
-    	{
+    for (uint32_t i = 1; i < renderer->textureSlotIndex; ++i) {
+    	if (renderer->textureSlots[i] == hyTexture->rendererID) {
     		textureIndex = (float)i;
     		break;
     	}
     }
     
     // Didn't found in previous loop. Put in next available free texture slot.
-    if (textureIndex == 0.0f)
-    {
+    if (textureIndex == 0.0f) {
     	textureIndex = (float)renderer->textureSlotIndex;
-    	renderer->textureSlots[renderer->textureSlotIndex] = textureID;
+    	renderer->textureSlots[renderer->textureSlotIndex] = hyTexture->rendererID;
     	renderer->textureSlotIndex++;
     }
     
-    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x, pos->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 0.0f, 0.0f };
+    glm_vec3_copy((vec3){ pos[0], pos[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 0.0f, 0.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x + size->x, pos->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 1.0f, 0.0f };
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 1.0f, 0.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x + size->x, pos->y + size->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord =  (vec2){ 1.0f, 1.0f };
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 1.0f, 1.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    renderer->quadVertexBufferPtr->Pos = (vec3){ pos->x, pos->y + size->y, pos->z };
-    renderer->quadVertexBufferPtr->Color = *color;
-    renderer->quadVertexBufferPtr->TexCoord = (vec2){ 0.0f, 1.0f };
+    glm_vec3_copy((vec3){ pos[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ 0.0f, 1.0f }, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     renderer->quadIndexCount += 6;
     renderer->stats.quadCount++;
-#endif
 }
 
 internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color)
@@ -1107,10 +1097,10 @@ internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color
     renderer->stats.quadCount++;
 }
 
-internal void DrawQuad2T(HyRenderer2D* renderer, vec2* pos, vec2* size, uint32_t textureID)
+internal void DrawQuad2TC(HyRenderer2D* renderer, vec2 pos, vec2 size, HyTexture* hyTexture, vec4 color)
 {
-    //vec3 temp = { pos->x, pos->y, 1.0f };
-    //DrawQuad3T(renderer, &temp, size, textureID);
+    vec3 temp = { pos[0], pos[1], 1.0f };
+    DrawQuad3TC(renderer, temp, size, hyTexture, color);
 }
 
 internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, vec4 color)
