@@ -2,7 +2,7 @@
 
 set prjName=Hyped
 set target=Release
-set files=%cd%\src\main.c
+set files=%cd%\src\win32_hyper.c
 set binDir=%cd%\bin\Win-x64-%target%
 set binIntDir=%cd%\bin-int\Win-x64-%target%
 
@@ -19,12 +19,13 @@ set sharedCompilerFlags=^
 	-Fo:%binIntDir%\%prjName% ^
 	-I %cd%\src ^
 	-I %cd%\deps ^
+	-I %cd%\deps\cglm\include ^
 	-I %cd%\resources ^
 	resources.res
 
 
 set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console -LIBPATH:%binIntDir%
-set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib
+set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
 
 call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 

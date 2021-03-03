@@ -14,7 +14,7 @@ if not exist %binIntDir%\resources.res (
 
 set sharedCompilerFlags=^
     -Oi -MTd -Zi -GR- -EHa- -FC -nologo -std:c++17 ^
-    -W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 ^
+    -W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 -wd4101 ^
     -Fe:%binDir%\%prjName% ^
     -Fo:%binIntDir%\%prjName% ^
     -Fm:%binDir%\%prjName% ^
