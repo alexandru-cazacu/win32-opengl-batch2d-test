@@ -7,6 +7,11 @@
 
 TODO brief description of the editor.
 
+- 🚀 fast - Made in C
+- 🍂 lightweight - No oversized dependencies
+- 🎩 elegant - Custom OpenGL UI
+- 🧰 fully featured - Extensions
+
 # Building from source
 
 ## Windows <img src="./media/windows-logo.png" width=24 valign="middle">

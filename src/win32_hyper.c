@@ -1,3 +1,7 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 #define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
 #include <sdkddkver.h>
 
@@ -87,7 +91,6 @@ void hy_free(void *p)
 }
 #endif
 
-
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -153,7 +156,7 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
 {
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -100.0f, 0.0f);
-    //GL_CALL(glViewport(0, 0, width, height));
+    GL_CALL(glViewport(0, 0, width, height));
 }
 
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
@@ -206,8 +209,8 @@ int main(int argc, char *argv[])
     }
     
     HyWindow window = {0};
-    HY_SetWindowSizeCallback(&window, SizeCallback);
     HY_CreateWindow(&window, config.startMode, "Hyped");
+    HY_SetWindowSizeCallback(&window, SizeCallback);
     
     if (!&window) {
         MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
@@ -221,13 +224,18 @@ int main(int argc, char *argv[])
     
     HyTexture testTexture = {0};
     HyTexture testTexture1 = {0};
+    HyTexture asciiTexture = {0};
     HyTexture_Create(&testTexture, "assets/textures/container.png", HyTextureFilterMode_Linear);
     HyTexture_Create(&testTexture1, "assets/textures/container_specular.png", HyTextureFilterMode_Linear);
+    //HyTexture_Create(&asciiTexture, "assets/textures/Fira Code.png", HyTextureFilterMode_Linear);
+    HyTexture_Create(&asciiTexture, "assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    
+    renderer.asciiTexture = &asciiTexture;
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    vec4 white = { 1.0f, 1.0f, 1.0f, 0.5f };
+    vec4 white = { 1.0f, 1.0f, 1.0f, 1.0f };
     vec4 bg0 = { 0.157f, 0.157f, 0.157f, 1.0f };
     vec4 bg1 = { 0.235f, 0.22f, 0.212f, 1.0f };
     vec4 red0 = { 0.8f, 0.141f, 0.114f, 1.0f };
@@ -246,6 +254,8 @@ int main(int argc, char *argv[])
         float currTime = HY_Timer_GetMilliseconds();
         float dt = currTime - lastTime;
         
+        HyRenderer2DStats stats = HyRenderer2D_GetStats(&renderer);
+        
         HyRenderer2D_ResetStats(&renderer);
         HyRenderer2D_BeginScene(&renderer, &camera2D);
         {
@@ -257,33 +267,24 @@ int main(int argc, char *argv[])
             static int count = 0;
             static float cpuLoad = 0.0f;
             static float currCpuLoad = 0.0f;
-            static float currDt  = 0.0f;
             
-            if (count % 60 == 0) {
-                cpuLoad = (float)GetCPULoad();
-            }
+            cpuLoad = (float)GetCPULoad();
+            currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             DrawQuad3TC(&renderer, (vec3){500.0f, 300.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture, white);
             DrawQuad3TC(&renderer, (vec3){800.0f, 200.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture1, red0);
             
-            for (uint32_t y = 0; y < 10; ++y) {
-                for (uint32_t x = 0; x < 10; ++x) {
+            for (uint32_t y = 0; y < 2000; ++y) {
+                for (uint32_t x = 0; x < 100; ++x) {
                     DrawQuad3TC(&renderer, (vec3){500 + x * 30.0f, y * 30.0f, 0.0f}, (vec2){25.0f, 25.0f}, &testTexture, green1);
                 }
             }
             
-            currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f) * dt;
-            currDt += (dt - currDt) * (dt / 1000.0f);
-            
             DrawQuad2C(&renderer, (vec3){ 0.0f, 0.0f }, (vec2){ 400.0f, 1000.0f }, bg1);
             DrawQuad2C(&renderer, (vec3){ border, border }, (vec2){ 400.0f - border * 2.0f, 1000.0f - border * 2.0f }, bg0);
             
-            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, red0);
-            DrawQuad2C(&renderer, pointer, (vec2){ 150.0f, ch }, red1);
-            pointer[1] -= (pad + ch);
-            
             DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, green0);
-            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f / 32.0f * currDt, ch }, green1);
+            DrawQuad2C(&renderer, pointer, (vec2){ 250.0f / 32.0f * dt, ch }, green1);
             pointer[1] -= (pad + ch);
             
             DrawQuad2C(&renderer, pointer, (vec2){ 250.0f, ch }, blue0);
@@ -295,11 +296,27 @@ int main(int argc, char *argv[])
             pointer[1] -= (pad + ch);
             
             count++;
+            
+            DrawQuad2C(&renderer, (vec2){ 0.0f, (float)window.height - 300.0f }, (vec2){ 600.0f, 300.0f }, bg1);
+            
+            char glInfo[256] = {0};
+            snprintf(glInfo, 256, "Vendor         : %s\nRenderer       : %s\nOpenGL version : %s\nGLSL version   : %s",
+                     window.glVendor,
+                     window.glRenderer,
+                     window.glVersion,
+                     window.glGLSL);
+            draw_debug_text(&renderer, glInfo, 12.0f, window.height - 28.0f, white);
+            
+            char drawInfo[256] = {0};
+            snprintf(drawInfo, 256, "Renderer Draws: %d Quads: %d", stats.drawCount, stats.quadCount);
+            draw_debug_text(&renderer, drawInfo, 12.0f, window.height - 208.0f, white);
+            
+            char cpuInfo[256] = {0};
+            snprintf(cpuInfo, 256, "CPU Load: %f\nFrame Time: %f", currCpuLoad, dt);
+            draw_debug_text(&renderer, cpuInfo, 12.0f, window.height - 258.0f, white);
+            
         }
         HyRenderer2D_EndScene(&renderer);
-        
-        HyRenderer2DStats stats = HyRenderer2D_GetStats(&renderer);
-        HY_INFO("Renderer Draws: %d Quads: %d", stats.drawCount, stats.quadCount);
         
         HY_SwapBuffers(&window);
         

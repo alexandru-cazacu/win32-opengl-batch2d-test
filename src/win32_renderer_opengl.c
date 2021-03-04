@@ -843,6 +843,8 @@ typedef struct
     uint32_t textureSlots[32]; // TODO(alex): Maybe malloc ?
     uint32_t textureSlotIndex; // TODO(alex): Make 1 by default
     
+    HyTexture* asciiTexture; // Debug text
+    
     HyRenderer2DStats stats;
 } HyRenderer2D;
 
@@ -990,6 +992,7 @@ internal void HyRenderer2D_EndScene(HyRenderer2D* renderer)
     HyRenderer2D_Flush(renderer);
 }
 
+// TODO(alex): Search how to draw 1 million quads with memory mapped buffers. Currently we can do 200k quads @60fps.
 internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
 {
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i)
@@ -1003,6 +1006,60 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
     GL_CALL(glBindVertexArray(renderer->vao));
     GL_CALL(glDrawElements(GL_TRIANGLES, renderer->quadIndexCount, GL_UNSIGNED_INT, NULL));
     renderer->stats.drawCount++;
+}
+
+internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, vec4 color, float tx, float ty, float tw, float th)
+{
+    // Checks if we have room in our current batch for more quads.
+    // 31 because the first one is a 1x1 white texture
+    if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31) {
+    	HyRenderer2D_EndScene(renderer);
+    	HyRenderer2D_BeginScene(renderer, NULL);
+    }
+    
+    float textureIndex = 0.0f;
+    // Skip first 1x1 white texture
+    // hHecks if current texture was used to render another quad.
+    for (uint32_t i = 1; i < renderer->textureSlotIndex; ++i) {
+    	if (renderer->textureSlots[i] == hyTexture->rendererID) {
+    		textureIndex = (float)i;
+    		break;
+    	}
+    }
+    
+    // Didn't found in previous loop. Put in next available free texture slot.
+    if (textureIndex == 0.0f) {
+    	textureIndex = (float)renderer->textureSlotIndex;
+    	renderer->textureSlots[renderer->textureSlotIndex] = hyTexture->rendererID;
+    	renderer->textureSlotIndex++;
+    }
+    
+    glm_vec3_copy((vec3){ pos[0], pos[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ tx, ty }, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->TexIndex = textureIndex;
+    renderer->quadVertexBufferPtr++;
+    
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ tx + tw, ty }, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->TexIndex = textureIndex;
+    renderer->quadVertexBufferPtr++;
+    
+    glm_vec3_copy((vec3){ pos[0] + size[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ tx + tw, ty + th }, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->TexIndex = textureIndex;
+    renderer->quadVertexBufferPtr++;
+    
+    glm_vec3_copy((vec3){ pos[0], pos[1] + size[1], pos[2] }, renderer->quadVertexBufferPtr->Pos);
+    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
+    glm_vec2_copy((vec2){ tx, ty + th }, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->TexIndex = textureIndex;
+    renderer->quadVertexBufferPtr++;
+    
+    renderer->quadIndexCount += 6;
+    renderer->stats.quadCount++;
 }
 
 internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, vec4 color)
@@ -1095,6 +1152,47 @@ internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color
     
     renderer->quadIndexCount += 6;
     renderer->stats.quadCount++;
+}
+
+internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float x, float y, vec4 color)
+{
+    int cellsPerRow = 10;
+    int cellsPerCol = 10;
+    int firstCharIndex = 31;
+    float charWidth = 16.0f;
+    float charPad = -(charWidth / 3.0f);
+    float lineHeight = 24.0f;
+    
+    char c = string[0];
+    int i = 0;
+    int xOffset = 0;
+    while(c != '\0') {
+        if (c == '\n') {
+            y -= lineHeight;
+            c = string[++i];
+            xOffset = 0;
+            continue;
+        }
+        
+        c -= (char)firstCharIndex;
+        
+        float cw = 1.0f / cellsPerRow;
+        float ch = 1.0f / cellsPerCol;
+        //float row = (float)(cellsPerCol - ((c - firstCharIndex) % cellsPerRow - 1));
+        //float cx = 1.0f / cellsPerRow;
+        float cx = (float)((c % cellsPerRow) - 1) * cw;
+        float cy = (cellsPerCol - (float)ceil((float)c / (float)cellsPerCol)) * ch;
+        
+        DrawQuad3TCC(renderer,
+                     (vec3){ x + (xOffset * (charWidth + charPad)), y, 0.0f },
+                     (vec2){ charWidth, charWidth },
+                     renderer->asciiTexture,
+                     color,
+                     cx, cy, cw, ch);
+        
+        c = string[++i];
+        xOffset++;
+    }
 }
 
 internal void DrawQuad2TC(HyRenderer2D* renderer, vec2 pos, vec2 size, HyTexture* hyTexture, vec4 color)

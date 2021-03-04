@@ -11,6 +11,7 @@ struct HyWindow
     int borderless_resize; // should the window allow resizing by dragging the borders while borderless
     int borderless_drag;   // should the window allow moving my dragging the client area
     int borderless_shadow; // should the window display a native aero shadow while borderless
+    
     b32 shouldClose;
     HWND handle;
     HDC deviceContext;
@@ -18,8 +19,16 @@ struct HyWindow
     WNDCLASSA windowClass;
     WINDOWPLACEMENT prevPos;
     fglOpenGLContext glContext;
-    b32 fullscreen;
     window_size_callback_t sizeCallback;
+    
+    b32 fullscreen;
+    int width;
+    int height;
+    
+    const char* glVendor;
+    const char* glRenderer;
+    const char* glVersion;
+    const char* glGLSL;
 };
 
 typedef enum HyWindowStartMode
@@ -256,6 +265,8 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 int height = HIWORD(lParam); // Macro to get the high-order word.
                 InvalidateRect(hwnd, NULL, TRUE);
                 HY_INFO("Resize: (%d, %d)", width, height);
+                hyWindow->width = width;
+                hyWindow->height = height;
                 if (hyWindow->sizeCallback) {
                     hyWindow->sizeCallback(hyWindow, width, height);
                 }
@@ -465,10 +476,10 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
 	memcpy((void*)g_GlExtension, extensions, ext_string_length);
     HY_TRACE(g_GlExtension);
     
-    HY_INFO("Vendor         : %s", glGetString(GL_VENDOR));
-    HY_INFO("Renderer       : %s", glGetString(GL_RENDERER));
-    HY_INFO("OpenGL version : %s", glGetString(GL_VERSION));
-    HY_INFO("GLSL version   : %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    hyWindow->glVendor = (const char*)glGetString(GL_VENDOR);
+    hyWindow->glRenderer = (const char*)glGetString(GL_RENDERER);
+    hyWindow->glVersion = (const char*)glGetString(GL_VERSION);
+    hyWindow->glGLSL = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
     
     hyWindow->borderless = true;
     hyWindow->borderless_resize = true;
