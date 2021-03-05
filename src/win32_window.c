@@ -1,6 +1,3 @@
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant
-                                // aggregate initializer
-
 //~
 /// Metrics
 ///
