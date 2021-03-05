@@ -634,7 +634,7 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
     HyFile* vShaderCode = HY_ReadFile(vertFilePath);
     HyFile* fShaderCode = HY_ReadFile(fragFilePath);
     
-    HyShader* shader = (HyShader*)malloc(sizeof (HyShader));
+    HyShader* shader = hy_malloc(sizeof(HyShader));
     
     // 2. compile shaders
     //int success;
@@ -662,15 +662,14 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
     // Delete the shaders as they're linked into our program now and no longer necessary
     // Delete alone won't delete a shader. You need to detach it first.
     // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDetachShader.xhtml
-    //GL_CALL(glDetachShader(shader->id , vertexShaderID));
-    //GL_CALL(glDetachShader(shader->id , fragmentShaderID));
+    GL_CALL(glDetachShader(shader->id , vertexShaderID));
+    GL_CALL(glDetachShader(shader->id , fragmentShaderID));
     GL_CALL(glDeleteShader(vertexShaderID));
     GL_CALL(glDeleteShader(fragmentShaderID));
     
     shader->name = "test\n";
     
-    for (int i = 0; i < HY_SHADER_MAP_SIZE; ++i)
-    {
+    for (int i = 0; i < HY_SHADER_MAP_SIZE; ++i) {
         shader->uniformLocationsMap[i] = -1;
     }
     
@@ -879,7 +878,7 @@ internal void HyRenderer2D_Init(HyRenderer2D* renderer)
     renderer->maxIndexCount = renderer->maxQuadCount * 6;
     renderer->maxTextures = 32; // TODO Query driver for max texture slots
     
-    renderer->quadVertexBufferBase = (HyQuadVertex *)malloc(sizeof(HyQuadVertex) * renderer->maxVertexCount);
+    renderer->quadVertexBufferBase = (HyQuadVertex *)hy_malloc(sizeof(HyQuadVertex) * renderer->maxVertexCount);
     
     GL_CALL(glGenVertexArrays(1, &renderer->vao));
     GL_CALL(glBindVertexArray(renderer->vao));
@@ -901,7 +900,7 @@ internal void HyRenderer2D_Init(HyRenderer2D* renderer)
     GL_CALL(glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, TexIndex))));
     GL_CALL(glEnableVertexAttribArray(3));
     
-    uint32_t* indices = (uint32_t *)malloc(sizeof(uint32_t) * renderer->maxIndexCount);
+    uint32_t* indices = (uint32_t *)hy_malloc(sizeof(uint32_t) * renderer->maxIndexCount);
     uint32_t offset = 0;
     
     for (uint32_t i = 0; i < renderer->maxIndexCount; i += 6)
@@ -921,7 +920,7 @@ internal void HyRenderer2D_Init(HyRenderer2D* renderer)
     GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->ebo));
     GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * renderer->maxIndexCount, indices, GL_STATIC_DRAW));
     
-    free(indices);
+    hy_free(indices);
     
     GL_CALL(glBindVertexArray(0));
     
@@ -954,7 +953,7 @@ internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
     GL_CALL(glDeleteBuffers (1, &renderer->vbo));
     GL_CALL(glDeleteBuffers (1, &renderer->ebo));
     
-    free(renderer->quadVertexBufferBase);
+    hy_free(renderer->quadVertexBufferBase);
     
     GL_CALL(glDeleteTextures(1, &renderer->whiteTexture));
 }

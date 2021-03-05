@@ -55,57 +55,24 @@
 #define NOMINMAX
 #define STRICT
 
-#if 0
-#define malloc(x) hy_malloc(x)
-#define calloc(x, y) hy_calloc(x, y)
-#define realloc(x, y) hy_realloc(x, y)
-#define free(x) hy_free(x)
-
-// TODO(alex): Replace VirtualAlloc with malloc
-// TODO(alex): Create memory allocator that overrides malloc
-// TODO(alex): Log malloc/free calls
-// TODO(alex): Plot memory usage as a chart.
-
-void* hy_malloc(size_t nbytes)
-{
-    /* Do your magic here! */
-    //printf("malloc");
-}
-
-void* hy_calloc(size_t count, size_t nbytes)
-{
-    /* Do your magic here! */
-    //printf("calloc");
-}
-
-void* hy_realloc(void* p, size_t nbytes)
-{
-    /* Do your magic here! */
-    //printf("realloc");
-}
-
-void hy_free(void *p)
-{
-    /* Do your magic here! */
-    //printf("free");
-}
-#endif
-
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <shellapi.h>
 
+#include "resources.h"
+#include "hy_types.c"
+#include "hy_log.c"
+#include "hy_time.c"
+
 #pragma warning( push )
 #pragma warning(disable: 4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable: 4996) // // TODO(alex): What error
+#pragma warning(disable: 4459) // TODO(alex): What error
 #pragma warning(disable: 4244) // TODO(alex): What error
 #pragma warning(disable: 4267) // TODO(alex): What error
 #pragma warning(disable: 4456) // TODO(alex): What error
-#pragma warning(disable: 4459) // TODO(alex): What error
-#pragma warning(disable: 4996) // TODO(alex): What error
 
-#include <microui.h>
-#include <microui.c>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 #include <ini.c>
@@ -115,17 +82,13 @@ void hy_free(void *p)
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-//#include <stb_image_resize.h>
+#include <stb_image_resize.h>
 
 #pragma warning( pop )
 
-#include "hy_types.c"
-#include "hy_log.c"
-#include "resources.h"
-#include "hy_file.c"
-#include "hy_time.c"
-#include "win32_renderer_opengl.c"
 #include "win32_window.c"
+#include "hy_file.c"
+#include "win32_renderer_opengl.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
@@ -243,7 +206,7 @@ internal int configHandler(void* user, const char* section, const char* name, co
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
     // TODO(alex): Remove when use framebuffer
-    HyCamera2D_Resize(&camera2D, (float)width, (float)height, -100.0f, 0.0f);
+    HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
     GL_CALL(glViewport(0, 0, width, height));
     hy_update_ui_layout(&g_rootFrame, (float)width, (float)height, 0, 0);
 }

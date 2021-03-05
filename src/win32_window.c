@@ -35,6 +35,43 @@ float GetCPULoad()
 }
 
 //~
+/// Memory
+///
+
+#define hy_malloc(nbytes)        _hy_malloc(nbytes, __FUNCTION__)
+#define hy_calloc(count, nbytes) _hy_calloc(count, nbytes, __FUNCTION__)
+#define hy_realloc(p, nbytes)    _hy_realloc(p, nbytes, __FUNCTION__)
+#define hy_free(p)               _hy_free(p, __FUNCTION__)
+
+// TODO(alex): Replace VirtualAlloc with malloc
+// TODO(alex): Create memory allocator that overrides malloc
+// TODO(alex): Plot memory usage as a chart.
+
+void* _hy_malloc(size_t nbytes, char* funcName)
+{
+    HY_INFO("%s \tmalloc(%d)", funcName, nbytes);
+    return malloc(nbytes);
+}
+
+void* _hy_calloc(size_t count, size_t nbytes)
+{
+    HY_INFO("\tcalloc");
+    return calloc(count, nbytes);
+}
+
+void* _hy_realloc(void* p, size_t nbytes)
+{
+    HY_INFO("\trealloc");
+    return realloc(p, nbytes);
+}
+
+void _hy_free(void *p, char* funcName)
+{
+    HY_INFO("%s \tfree()", funcName);
+    free(p);
+}
+
+//~
 /// Window.
 ///
 
@@ -511,7 +548,7 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
     // Load GL extensions list
     const char* extensions = (const char*)glGetString(GL_EXTENSIONS); 
     size_t ext_string_length = strlen(extensions) + 1;
-    g_GlExtension= VirtualAlloc(0, sizeof(char) * ext_string_length, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    g_GlExtension= malloc(sizeof(char) * ext_string_length);
 	memcpy((void*)g_GlExtension, extensions, ext_string_length);
     HY_TRACE(g_GlExtension);
     
