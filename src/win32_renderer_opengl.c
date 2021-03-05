@@ -14,27 +14,13 @@ internal int GLLogCall(const char* function, const char* file, int line)
   while (errorCode) {
     char* error = NULL;
     switch (errorCode) {
-      case GL_INVALID_ENUM:
-        error = "INVALID_ENUM";
-        break;
-      case GL_INVALID_VALUE:
-        error = "INVALID_VALUE";
-        break;
-      case GL_INVALID_OPERATION:
-        error = "INVALID_OPERATION";
-        break;
-      case GL_STACK_OVERFLOW:
-        error = "STACK_OVERFLOW";
-        break;
-      case GL_STACK_UNDERFLOW:
-        error = "STACK_UNDERFLOW";
-        break;
-      case GL_OUT_OF_MEMORY:
-        error = "OUT_OF_MEMORY";
-        break;
-      case GL_INVALID_FRAMEBUFFER_OPERATION:
-        error = "INVALID_FRAMEBUFFER_OPERATION";
-        break;
+      case GL_INVALID_ENUM: error = "INVALID_ENUM"; break;
+      case GL_INVALID_VALUE: error = "INVALID_VALUE"; break;
+      case GL_INVALID_OPERATION: error = "INVALID_OPERATION"; break;
+      case GL_STACK_OVERFLOW: error = "STACK_OVERFLOW"; break;
+      case GL_STACK_UNDERFLOW: error = "STACK_UNDERFLOW"; break;
+      case GL_OUT_OF_MEMORY: error = "OUT_OF_MEMORY"; break;
+      case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
     }
     HY_ERROR("[GLLogCall] %d %s %s %s:%d\n", errorCode, error, function, file, line);
     return false;
@@ -62,71 +48,33 @@ internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id
 
   char* sourceMessage = NULL;
   switch (source) {
-    case GL_DEBUG_SOURCE_API:
-      sourceMessage = "API";
-      break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-      sourceMessage = "Window System";
-      break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
-      sourceMessage = "Shader Compiler";
-      break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-      sourceMessage = "Third Party";
-      break;
-    case GL_DEBUG_SOURCE_APPLICATION:
-      sourceMessage = "Application";
-      break;
-    case GL_DEBUG_SOURCE_OTHER:
-      sourceMessage = "Other";
-      break;
+    case GL_DEBUG_SOURCE_API: sourceMessage = "API"; break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: sourceMessage = "Window System"; break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceMessage = "Shader Compiler"; break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY: sourceMessage = "Third Party"; break;
+    case GL_DEBUG_SOURCE_APPLICATION: sourceMessage = "Application"; break;
+    case GL_DEBUG_SOURCE_OTHER: sourceMessage = "Other"; break;
   }
 
   char* typeMessage = NULL;
   switch (type) {
-    case GL_DEBUG_TYPE_ERROR:
-      typeMessage = "Error";
-      break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-      typeMessage = "Deprecated Behaviour";
-      break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-      typeMessage = "Undefined Behaviour";
-      break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-      typeMessage = "Portability";
-      break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-      typeMessage = "Performance";
-      break;
-    case GL_DEBUG_TYPE_MARKER:
-      typeMessage = "Marker";
-      break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:
-      typeMessage = "Push Group";
-      break;
-    case GL_DEBUG_TYPE_POP_GROUP:
-      typeMessage = "Pop Group";
-      break;
-    case GL_DEBUG_TYPE_OTHER:
-      typeMessage = "Other";
-      break;
+    case GL_DEBUG_TYPE_ERROR: typeMessage = "Error"; break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeMessage = "Deprecated Behaviour"; break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typeMessage = "Undefined Behaviour"; break;
+    case GL_DEBUG_TYPE_PORTABILITY: typeMessage = "Portability"; break;
+    case GL_DEBUG_TYPE_PERFORMANCE: typeMessage = "Performance"; break;
+    case GL_DEBUG_TYPE_MARKER: typeMessage = "Marker"; break;
+    case GL_DEBUG_TYPE_PUSH_GROUP: typeMessage = "Push Group"; break;
+    case GL_DEBUG_TYPE_POP_GROUP: typeMessage = "Pop Group"; break;
+    case GL_DEBUG_TYPE_OTHER: typeMessage = "Other"; break;
   }
 
   char* severityMessage = NULL;
   switch (severity) {
-    case GL_DEBUG_SEVERITY_HIGH:
-      severityMessage = "high";
-      break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-      severityMessage = "medium";
-      break;
-    case GL_DEBUG_SEVERITY_LOW:
-      severityMessage = "low";
-      break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-      severityMessage = "notification";
-      break;
+    case GL_DEBUG_SEVERITY_HIGH: severityMessage = "high"; break;
+    case GL_DEBUG_SEVERITY_MEDIUM: severityMessage = "medium"; break;
+    case GL_DEBUG_SEVERITY_LOW: severityMessage = "low"; break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION: severityMessage = "notification"; break;
   }
 
   HY_ERROR("[glDebugOutput] (%d): %s"
@@ -173,7 +121,8 @@ internal HyError HyTexture_Create(HyTexture* texture, const char* path, HyTextur
   unsigned int textureID;
   GL_CALL(glGenTextures(1, &textureID));
   GL_CALL(glBindTexture(GL_TEXTURE_2D, textureID));
-  // set the texture wrapping/filtering options (on the currently bound texture object)
+  // set the texture wrapping/filtering options (on the currently bound texture
+  // object)
   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
@@ -272,7 +221,8 @@ internal void HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, u
   if (framebuffer->width != width && framebuffer->height != height && framebuffer->rendererID) {
     HyFramebuffer_Destroy(framebuffer);
     GL_CALL(glDeleteTextures(1, &framebuffer->colorAttachmentRendererID));
-    // GL_CALL(glDeleteRenderbuffers(1, &framebuffer->depthAttachmentRendererID));
+    // GL_CALL(glDeleteRenderbuffers(1,
+    // &framebuffer->depthAttachmentRendererID));
   }
 
   framebuffer->width = width;
@@ -377,28 +327,17 @@ typedef struct {
 internal uint32_t HY_ShaderDataType_GetSize(HyShaderDataType type)
 {
   switch (type) {
-    case HyShaderDataTypeFloat:
-      return 4;
-    case HyShaderDataTypeFloat2:
-      return 4 * 2;
-    case HyShaderDataTypeFloat3:
-      return 4 * 3;
-    case HyShaderDataTypeFloat4:
-      return 4 * 4;
-    case HyShaderDataTypeMat3:
-      return 4 * 3 * 3;
-    case HyShaderDataTypeMat4:
-      return 4 * 4 * 4;
-    case HyShaderDataTypeInt:
-      return 4;
-    case HyShaderDataTypeInt2:
-      return 4 * 2;
-    case HyShaderDataTypeInt3:
-      return 4 * 3;
-    case HyShaderDataTypeInt4:
-      return 4 * 4;
-    case HyShaderDataTypeBool:
-      return 1;
+    case HyShaderDataTypeFloat: return 4;
+    case HyShaderDataTypeFloat2: return 4 * 2;
+    case HyShaderDataTypeFloat3: return 4 * 3;
+    case HyShaderDataTypeFloat4: return 4 * 4;
+    case HyShaderDataTypeMat3: return 4 * 3 * 3;
+    case HyShaderDataTypeMat4: return 4 * 4 * 4;
+    case HyShaderDataTypeInt: return 4;
+    case HyShaderDataTypeInt2: return 4 * 2;
+    case HyShaderDataTypeInt3: return 4 * 3;
+    case HyShaderDataTypeInt4: return 4 * 4;
+    case HyShaderDataTypeBool: return 1;
   }
 
   HY_ASSERT(false, "Unknown HyShaderDataType!");
@@ -408,28 +347,17 @@ internal uint32_t HY_ShaderDataType_GetSize(HyShaderDataType type)
 internal uint32_t HY_ShaderDataType_GetComponentCount(HyShaderDataType type)
 {
   switch (type) {
-    case HyShaderDataTypeFloat:
-      return 1;
-    case HyShaderDataTypeFloat2:
-      return 2;
-    case HyShaderDataTypeFloat3:
-      return 3;
-    case HyShaderDataTypeFloat4:
-      return 4;
-    case HyShaderDataTypeMat3:
-      return 3 * 3;
-    case HyShaderDataTypeMat4:
-      return 4 * 4;
-    case HyShaderDataTypeInt:
-      return 1;
-    case HyShaderDataTypeInt2:
-      return 2;
-    case HyShaderDataTypeInt3:
-      return 3;
-    case HyShaderDataTypeInt4:
-      return 4;
-    case HyShaderDataTypeBool:
-      return 1;
+    case HyShaderDataTypeFloat: return 1;
+    case HyShaderDataTypeFloat2: return 2;
+    case HyShaderDataTypeFloat3: return 3;
+    case HyShaderDataTypeFloat4: return 4;
+    case HyShaderDataTypeMat3: return 3 * 3;
+    case HyShaderDataTypeMat4: return 4 * 4;
+    case HyShaderDataTypeInt: return 1;
+    case HyShaderDataTypeInt2: return 2;
+    case HyShaderDataTypeInt3: return 3;
+    case HyShaderDataTypeInt4: return 4;
+    case HyShaderDataTypeBool: return 1;
   }
 
   HY_ASSERT(false, "Unknown ShaderDataType!");
@@ -439,28 +367,17 @@ internal uint32_t HY_ShaderDataType_GetComponentCount(HyShaderDataType type)
 internal GLenum HY_ShaderDataTypeToOpenGLBaseType(HyShaderDataType type)
 {
   switch (type) {
-    case HyShaderDataTypeFloat:
-      return GL_FLOAT;
-    case HyShaderDataTypeFloat2:
-      return GL_FLOAT;
-    case HyShaderDataTypeFloat3:
-      return GL_FLOAT;
-    case HyShaderDataTypeFloat4:
-      return GL_FLOAT;
-    case HyShaderDataTypeMat3:
-      return GL_FLOAT;
-    case HyShaderDataTypeMat4:
-      return GL_FLOAT;
-    case HyShaderDataTypeInt:
-      return GL_INT;
-    case HyShaderDataTypeInt2:
-      return GL_INT;
-    case HyShaderDataTypeInt3:
-      return GL_INT;
-    case HyShaderDataTypeInt4:
-      return GL_INT;
-    case HyShaderDataTypeBool:
-      return GL_BOOL;
+    case HyShaderDataTypeFloat: return GL_FLOAT;
+    case HyShaderDataTypeFloat2: return GL_FLOAT;
+    case HyShaderDataTypeFloat3: return GL_FLOAT;
+    case HyShaderDataTypeFloat4: return GL_FLOAT;
+    case HyShaderDataTypeMat3: return GL_FLOAT;
+    case HyShaderDataTypeMat4: return GL_FLOAT;
+    case HyShaderDataTypeInt: return GL_INT;
+    case HyShaderDataTypeInt2: return GL_INT;
+    case HyShaderDataTypeInt3: return GL_INT;
+    case HyShaderDataTypeInt4: return GL_INT;
+    case HyShaderDataTypeBool: return GL_BOOL;
   }
 
   HY_ASSERT(false, "Unknown HyShaderDataType!");
@@ -718,8 +635,8 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
   GL_CALL(glLinkProgram(shader->id));
   HY_Shader_CheckCompileErrors(shader->id, "PROGRAM");
 
-  // Delete the shaders as they're linked into our program now and no longer necessary
-  // Delete alone won't delete a shader. You need to detach it first.
+  // Delete the shaders as they're linked into our program now and no longer
+  // necessary Delete alone won't delete a shader. You need to detach it first.
   // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDetachShader.xhtml
   GL_CALL(glDetachShader(shader->id, vertexShaderID));
   GL_CALL(glDetachShader(shader->id, fragmentShaderID));
@@ -738,7 +655,8 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
 // Returns location if found, -1 otherwise.
 internal int HY_Shader_GetUniformLocation(HyShader* shader, const char* name)
 {
-  // TODO(alex): Reimplement uniform hash table with collision check and correct size.
+  // TODO(alex): Reimplement uniform hash table with collision check and correct
+  // size.
 
 #if 0
     unsigned long hash = HY_StringHash(name);
@@ -1045,14 +963,16 @@ internal void HyRenderer2D_EndScene(HyRenderer2D* renderer)
   HyRenderer2D_Flush(renderer);
 }
 
-// TODO(alex): Search how to draw 1 million quads with memory mapped buffers. Currently we can do 200k quads @60fps.
+// TODO(alex): Search how to draw 1 million quads with memory mapped buffers.
+// Currently we can do 200k quads @60fps.
 internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
 {
   for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i) {
     GL_CALL(glBindTextureUnit(i, renderer->textureSlots[i]));
     // GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
     // GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->textureSlots[i]));
-    // TODO(alex): What is the difference between the separate calls and the single one?
+    // TODO(alex): What is the difference between the separate calls and the
+    // single one?
   }
 
   GL_CALL(glBindVertexArray(renderer->vao));
@@ -1230,8 +1150,8 @@ internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float 
 
     float cw = 1.0f / cellsPerRow;
     float ch = 1.0f / cellsPerCol;
-    // float row = (float)(cellsPerCol - ((c - firstCharIndex) % cellsPerRow - 1));
-    // float cx = 1.0f / cellsPerRow;
+    // float row = (float)(cellsPerCol - ((c - firstCharIndex) % cellsPerRow -
+    // 1)); float cx = 1.0f / cellsPerRow;
     float cx = (float)((c % cellsPerRow) - 1) * cw;
     float cy = (cellsPerCol - (float)ceil((float)c / (float)cellsPerCol)) * ch;
 

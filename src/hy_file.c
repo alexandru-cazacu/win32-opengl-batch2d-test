@@ -22,8 +22,9 @@ internal HyFile* HY_ReadFile(const char* fileName)
       result->data = VirtualAlloc(0, fileSize32, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
       if (result->data) {
         DWORD bytesRead;
-        // NOTE(alex): the reason for the second check is because someone may truncate the file in between our
-        // GetFileSize() and ReadFile(). That would result.Data in a file size greater than the bytes read.
+        // NOTE(alex): the reason for the second check is because someone may
+        // truncate the file in between our GetFileSize() and ReadFile(). That
+        // would result.Data in a file size greater than the bytes read.
         if (ReadFile(fileHandle, result->data, fileSize32, &bytesRead, 0) && (fileSize32 == bytesRead)) {
           result->size = fileSize32;
         } else {

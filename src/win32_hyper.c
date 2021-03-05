@@ -1,6 +1,8 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// This is an independent project of an individual developer. Dear PVS-Studio,
+// please check it.
 
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java:
+// http://www.viva64.com
 
 #define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
 #include <sdkddkver.h>
@@ -13,7 +15,8 @@
 #endif
 
 #ifndef WIN32_EXTRA_LEAN
-#define WIN32_EXTRA_LEAN // TODO(alex): Check if it really does something in Windows.h
+#define WIN32_EXTRA_LEAN // TODO(alex): Check if it really does something in
+                         // Windows.h
 #endif
 
 #ifndef VC_EXTRALEAN
@@ -66,7 +69,8 @@
 #include "resources.h"
 
 #pragma warning(push)
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable : 4204) // nonstandard extension used : non-constant
+                                // aggregate initializer
 #pragma warning(disable : 4996) // // TODO(alex): What error
 #pragma warning(disable : 4459) // TODO(alex): What error
 #pragma warning(disable : 4244) // TODO(alex): What error
@@ -250,7 +254,8 @@ int main(int argc, char* argv[])
   HyTexture asciiTexture = {0};
   HyTexture_Create(&testTexture, "assets/textures/container.png", HyTextureFilterMode_Linear);
   HyTexture_Create(&testTexture1, "assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-  // HyTexture_Create(&asciiTexture, "assets/textures/Fira Code.png", HyTextureFilterMode_Linear);
+  // HyTexture_Create(&asciiTexture, "assets/textures/Fira Code.png",
+  // HyTextureFilterMode_Linear);
   HyTexture_Create(&asciiTexture, "assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
 
   renderer.asciiTexture = &asciiTexture;
@@ -311,7 +316,9 @@ int main(int argc, char* argv[])
       DrawQuad2C(&renderer, (vec2){0.0f, (float)window.height - 300.0f}, (vec2){600.0f, 300.0f}, bg1);
 
       char glInfo[256] = {0};
-      snprintf(glInfo, 256, "Vendor         : %s\nRenderer       : %s\nOpenGL version : %s\nGLSL version   : %s",
+      snprintf(glInfo, 256,
+               "Vendor         : %s\nRenderer       : %s\nOpenGL version : "
+               "%s\nGLSL version   : %s",
                window.glVendor, window.glRenderer, window.glVersion, window.glGLSL);
       draw_debug_text(&renderer, glInfo, 12.0f, window.height - 28.0f, white);
 

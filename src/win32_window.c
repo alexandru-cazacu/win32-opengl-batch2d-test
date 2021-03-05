@@ -1,4 +1,5 @@
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable : 4204) // nonstandard extension used : non-constant
+                                // aggregate initializer
 
 //~
 /// Metrics
@@ -24,9 +25,9 @@ internal unsigned long long FileTimeToInt64(FILETIME ft)
   return (((unsigned long long)(ft.dwHighDateTime)) << 32) | ((unsigned long long)ft.dwLowDateTime);
 }
 
-// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
-// You'll need to call this at regular intervals, since it measures the load between
-// the previous call and the current one.  Returns -1.0 on error.
+// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in
+// between You'll need to call this at regular intervals, since it measures the
+// load between the previous call and the current one.  Returns -1.0 on error.
 float GetCPULoad()
 {
   FILETIME idleTime, kernelTime, userTime;
@@ -83,9 +84,12 @@ typedef void (*window_size_callback_t)(HyWindow*, unsigned int, unsigned int);
 /// @brief Represents a platform-indipendent window.
 struct HyWindow {
   int borderless;        // is the window currently borderless
-  int borderless_resize; // should the window allow resizing by dragging the borders while borderless
-  int borderless_drag;   // should the window allow moving my dragging the client area
-  int borderless_shadow; // should the window display a native aero shadow while borderless
+  int borderless_resize; // should the window allow resizing by dragging the
+                         // borders while borderless
+  int borderless_drag;   // should the window allow moving my dragging the client
+                         // area
+  int borderless_shadow; // should the window display a native aero shadow while
+                         // borderless
 
   b32                    shouldClose;
   HWND                   handle;
@@ -113,10 +117,11 @@ typedef enum HyWindowStartMode {
 } HyWindowStartMode;
 
 // we cannot just use WS_POPUP style
-// WS_THICKFRAME: without this the window cannot be resized and so aero snap, de-maximizing and minimizing won't work
-// WS_SYSMENU: enables the context menu with the move, close, maximize, minize... commands (shift + right-click on the
-// task bar item) WS_CAPTION: enables aero minimize animation/transition WS_MAXIMIZEBOX, WS_MINIMIZEBOX: enable
-// minimize/maximize
+// WS_THICKFRAME: without this the window cannot be resized and so aero snap,
+// de-maximizing and minimizing won't work WS_SYSMENU: enables the context menu
+// with the move, close, maximize, minize... commands (shift + right-click on
+// the task bar item) WS_CAPTION: enables aero minimize animation/transition
+// WS_MAXIMIZEBOX, WS_MINIMIZEBOX: enable minimize/maximize
 typedef enum Style {
   StyleWindowed = WS_OVERLAPPEDWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
   StyleAeroBorderless = WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
@@ -157,8 +162,8 @@ internal void Win32AdjustMaximizedClientRect(HWND window, RECT* rect)
     return;
   }
 
-  // when maximized, make the client area fill just the monitor (without task bar) rect,
-  // not the whole window rect which extends beyond the monitor.
+  // when maximized, make the client area fill just the monitor (without task
+  // bar) rect, not the whole window rect which extends beyond the monitor.
   *rect = monitorInfo.rcWork;
 }
 
@@ -192,7 +197,8 @@ internal void Win32SetBorderless(HyWindow* hyWindow, int enabled)
 
     SetWindowLongPtrA(hyWindow->handle, GWL_STYLE, (LONG)newStyle);
 
-    // when switching between borderless and windowed, restore appropriate shadow state
+    // when switching between borderless and windowed, restore appropriate
+    // shadow state
     Win32SetShadow(hyWindow->handle, hyWindow->borderless_shadow && (newStyle != StyleWindowed));
 
     // redraw frame
@@ -211,7 +217,8 @@ internal void Win32SetBorderlessShadow(HyWindow* hyWindow, int enabled)
 
 internal LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
 {
-  // Exit early or we will get artifacts where window stays fullscreen but is also draggable.
+  // Exit early or we will get artifacts where window stays fullscreen but is
+  // also draggable.
   if (hyWindow->fullscreen) {
     return HTNOWHERE;
   }
@@ -249,26 +256,16 @@ internal LRESULT Win32HitTest(HyWindow* hyWindow, POINT cursor)
                      top * (cursor.y < (window.top + border.y)) | bottom * (cursor.y >= (window.bottom - border.y));
 
   switch (result) {
-    case left:
-      return hyWindow->borderless_resize ? HTLEFT : drag;
-    case right:
-      return hyWindow->borderless_resize ? HTRIGHT : drag;
-    case top:
-      return hyWindow->borderless_resize ? HTTOP : drag;
-    case bottom:
-      return hyWindow->borderless_resize ? HTBOTTOM : drag;
-    case top | left:
-      return hyWindow->borderless_resize ? HTTOPLEFT : drag;
-    case top | right:
-      return hyWindow->borderless_resize ? HTTOPRIGHT : drag;
-    case bottom | left:
-      return hyWindow->borderless_resize ? HTBOTTOMLEFT : drag;
-    case bottom | right:
-      return hyWindow->borderless_resize ? HTBOTTOMRIGHT : drag;
-    case client:
-      return drag;
-    default:
-      return HTNOWHERE;
+    case left: return hyWindow->borderless_resize ? HTLEFT : drag;
+    case right: return hyWindow->borderless_resize ? HTRIGHT : drag;
+    case top: return hyWindow->borderless_resize ? HTTOP : drag;
+    case bottom: return hyWindow->borderless_resize ? HTBOTTOM : drag;
+    case top | left: return hyWindow->borderless_resize ? HTTOPLEFT : drag;
+    case top | right: return hyWindow->borderless_resize ? HTTOPRIGHT : drag;
+    case bottom | left: return hyWindow->borderless_resize ? HTBOTTOMLEFT : drag;
+    case bottom | right: return hyWindow->borderless_resize ? HTBOTTOMRIGHT : drag;
+    case client: return drag;
+    default: return HTNOWHERE;
   }
 }
 
@@ -350,7 +347,8 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         DestroyWindow(hwnd);
       } break;
 
-      case WM_DESTROY: { // After the window is removed, before all child windows are destroyed
+      case WM_DESTROY: { // After the window is removed, before all child windows
+                         // are destroyed
         PostQuitMessage(0);
       } break;
 #if 0
@@ -390,7 +388,8 @@ internal b32 HY_WindowShouldClose(HyWindow* window)
 
 ///
 /// Toggle window fullscreen.
-/// TODO(alex): Maybe we need a better API. On other platform you may not rely on styles to detect being fullscreen.
+/// TODO(alex): Maybe we need a better API. On other platform you may not rely
+/// on styles to detect being fullscreen.
 ///
 internal void HY_ToggleFullscreen(HyWindow* hyWindow)
 {
@@ -509,13 +508,12 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
     }
 #endif
 
-  hyWindow->handle =
-      CreateWindowA(window_class.lpszClassName, title,           // class name, window name
-                                                                 //(DWORD)StyleAeroBorderless,                  // style
-                    WS_OVERLAPPEDWINDOW,                         // style
-                    CW_USEDEFAULT, CW_USEDEFAULT, width, height, // x, y, width, height
-                    NULL, NULL,                                  // parent window, menu
-                    window_class.hInstance, hyWindow);           // instance, param
+  hyWindow->handle = CreateWindowA(window_class.lpszClassName, title,           // class name, window name
+                                                                                //(DWORD)StyleAeroBorderless, // style
+                                   WS_OVERLAPPEDWINDOW,                         // style
+                                   CW_USEDEFAULT, CW_USEDEFAULT, width, height, // x, y, width, height
+                                   NULL, NULL,                                  // parent window, menu
+                                   window_class.hInstance, hyWindow);           // instance, param
 
   MSG message;
   while (PeekMessageA(&message, 0, 0, 0, PM_REMOVE))
