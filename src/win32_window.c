@@ -1,5 +1,43 @@
 #pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
 
+//~
+/// Metrics
+///
+
+static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
+{
+    static unsigned long long _previousTotalTicks = 0;
+    static unsigned long long _previousIdleTicks = 0;
+    
+    unsigned long long totalTicksSinceLastTime = totalTicks-_previousTotalTicks;
+    unsigned long long idleTicksSinceLastTime  = idleTicks-_previousIdleTicks;
+    
+    float ret = 1.0f-((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime)/totalTicksSinceLastTime : 0);
+    
+    _previousTotalTicks = totalTicks;
+    _previousIdleTicks  = idleTicks;
+    return ret;
+}
+
+internal unsigned long long FileTimeToInt64(FILETIME ft)
+{
+    return (((unsigned long long)(ft.dwHighDateTime))<<32) | ((unsigned long long)ft.dwLowDateTime);
+}
+
+
+// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
+// You'll need to call this at regular intervals, since it measures the load between
+// the previous call and the current one.  Returns -1.0 on error.
+float GetCPULoad()
+{
+    FILETIME idleTime, kernelTime, userTime;
+    return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime)+FileTimeToInt64(userTime)) : -1.0f;
+}
+
+//~
+/// Window.
+///
+
 typedef struct HyWindow HyWindow;
 
 typedef void (*window_size_callback_t) (HyWindow*, unsigned int, unsigned int);
@@ -211,6 +249,7 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
     
     if (hyWindow) {
         switch(msg) {
+#if 0
             case WM_NCCALCSIZE: {
                 if (wParam == TRUE && hyWindow->borderless) {
                     NCCALCSIZE_PARAMS params = *(NCCALCSIZE_PARAMS*)lParam;
@@ -236,7 +275,6 @@ internal LRESULT CALLBACK Win32WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
                 }
             } break;
             
-#if 0
             case WM_PAINT: {
                 COLORREF bkcolor = RGB(25,25,25);
                 PAINTSTRUCT ps;
@@ -441,7 +479,8 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
 #endif
     
     hyWindow->handle = CreateWindowA(window_class.lpszClassName, title,           // class name, window name
-                                     (DWORD)StyleAeroBorderless,                  // style
+                                     //(DWORD)StyleAeroBorderless,                  // style
+                                     WS_OVERLAPPEDWINDOW,                  // style
                                      CW_USEDEFAULT, CW_USEDEFAULT, width, height, // x, y, width, height
                                      NULL, NULL,                                  // parent window, menu
                                      window_class.hInstance, hyWindow);           // instance, param
@@ -486,10 +525,8 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
     hyWindow->borderless_drag = true;
     hyWindow->borderless_shadow = true;
     
-    SetWindowTextA(hyWindow->handle, (LPCSTR)glGetString(GL_VERSION));
-    
-    Win32SetBorderlessShadow(hyWindow, true);
-    Win32SetBorderless(hyWindow, true);
+    //Win32SetBorderlessShadow(hyWindow, true);
+    //Win32SetBorderless(hyWindow, true);
     
     if (startMode == HyWindowStartMode_Maximized) {
         ShowWindow(hyWindow->handle, SW_MAXIMIZE);

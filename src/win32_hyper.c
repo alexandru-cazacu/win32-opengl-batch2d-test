@@ -96,12 +96,19 @@ void hy_free(void *p)
 #include <dwmapi.h>
 #include <shellapi.h>
 
-#pragma warning(disable:4204) // nonstandard extension used : non-constant aggregate initializer
-#pragma warning(disable:4996) // // TODO(alex): What error
-#pragma warning(disable:4459) // TODO(alex): What error
+#pragma warning( push )
+#pragma warning(disable: 4204) // nonstandard extension used : non-constant aggregate initializer
+#pragma warning(disable: 4244) // TODO(alex): What error
+#pragma warning(disable: 4267) // TODO(alex): What error
+#pragma warning(disable: 4456) // TODO(alex): What error
+#pragma warning(disable: 4459) // TODO(alex): What error
+#pragma warning(disable: 4996) // TODO(alex): What error
 
+#include <microui.h>
+#include <microui.c>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
+#include <ini.c>
 
 #define FGL_IMPLEMENTATION
 #include <final_dynamic_opengl.h>
@@ -109,6 +116,8 @@ void hy_free(void *p)
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 //#include <stb_image_resize.h>
+
+#pragma warning( pop )
 
 #include "hy_types.c"
 #include "hy_log.c"
@@ -118,9 +127,88 @@ void hy_free(void *p)
 #include "win32_renderer_opengl.c"
 #include "win32_window.c"
 
-#include "ini.c"
-
 // TODO(alex): What is the right way to add an icon without Visual Studio?
+
+vec4 white = { 1.0f, 1.0f, 1.0f, 1.0f };
+vec4 bg0 = { 0.157f, 0.157f, 0.157f, 1.0f };
+vec4 bg1 = { 0.235f, 0.22f, 0.212f, 1.0f };
+vec4 red0 = { 0.8f, 0.141f, 0.114f, 1.0f };
+vec4 red1 = { 0.984f, 0.286f, 0.204f, 1.0f };
+vec4 green0 = { 0.596f, 0.592f, 0.102f, 1.0f };
+vec4 green1 = { 0.722f, 0.733f, 0.149f, 1.0f };
+vec4 blue0 = { 0.271f, 0.522f, 0.533f, 1.0f };
+vec4 blue1 = { 0.514f, 0.647f, 0.596f, 1.0f };
+float pad = 15.0f;
+float border = 3.0f;
+float ch = 35.0f;
+
+typedef struct HyFrame HyFrame;
+
+struct HyFrame
+{
+    float width; // Internally or externally for 
+    float height;
+    bool fixedWidth; // If true you must also set the width
+    bool fixedHeight; // If true you must also set the height
+    
+    float padding;
+    
+    vec4 color;
+    float posY;
+    float posX;
+    HyFrame* left;
+    HyFrame* right;
+};
+
+global_variable HyFrame g_rootFrame;
+
+internal void hy_draw_ui_layout(HyRenderer2D* r, HyFrame* frame)
+{
+    if (!frame) return;
+    
+    DrawQuad2C(r, (vec2){ frame->posX, frame->posY }, (vec2){ frame->width, frame->height }, frame->color);
+    
+    if (frame->left != NULL) hy_draw_ui_layout(r, frame->left);
+    if (frame->right != NULL) hy_draw_ui_layout(r, frame->right);
+}
+
+internal void hy_update_ui_layout(HyFrame* frame, float width, float height, float x, float y)
+{
+    frame->width = width;
+    frame->height = height;
+    frame->posX = x;
+    frame->posY = y;
+    
+    if (!frame->left && !frame->right) {
+        return;
+    }
+    
+    if (frame->left && !frame->right) {
+        hy_update_ui_layout(frame->left, width, height, x, y);
+        return;
+    }
+    
+    if (!frame->left && frame->right) {
+        hy_update_ui_layout(frame->right, width, height, x, y);
+        return;
+    }
+    
+    float remainingWidth = 0.0f;
+    if (frame->left->fixedWidth) {
+        remainingWidth = width - frame->left->width;
+        
+        hy_update_ui_layout(frame->left, frame->left->width, height, x, y);
+        hy_update_ui_layout(frame->right, remainingWidth, height, x + frame->left->width, y);
+    } else if(frame->right->fixedWidth) {
+        remainingWidth = width - frame->right->width;
+        
+        hy_update_ui_layout(frame->left, remainingWidth, height, x, y);
+        hy_update_ui_layout(frame->right, frame->right->width, height, x + frame->left->width, y);
+    } else {
+        hy_update_ui_layout(frame->left, width / 2.0f, height, x, y);
+        hy_update_ui_layout(frame->right, width / 2.0f, height, x + width / 2.0f, y);
+    }
+}
 
 typedef struct
 {
@@ -128,7 +216,7 @@ typedef struct
     const char* user;
 } HyConfig;
 
-HyCamera2D camera2D;
+global_variable HyCamera2D camera2D;
 
 internal int configHandler(void* user, const char* section, const char* name, const char* value)
 {
@@ -157,36 +245,7 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -100.0f, 0.0f);
     GL_CALL(glViewport(0, 0, width, height));
-}
-
-static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
-{
-    static unsigned long long _previousTotalTicks = 0;
-    static unsigned long long _previousIdleTicks = 0;
-    
-    unsigned long long totalTicksSinceLastTime = totalTicks-_previousTotalTicks;
-    unsigned long long idleTicksSinceLastTime  = idleTicks-_previousIdleTicks;
-    
-    float ret = 1.0f-((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime)/totalTicksSinceLastTime : 0);
-    
-    _previousTotalTicks = totalTicks;
-    _previousIdleTicks  = idleTicks;
-    return ret;
-}
-
-internal unsigned long long FileTimeToInt64(FILETIME ft)
-{
-    return (((unsigned long long)(ft.dwHighDateTime))<<32) | ((unsigned long long)ft.dwLowDateTime);
-}
-
-
-// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
-// You'll need to call this at regular intervals, since it measures the load between
-// the previous call and the current one.  Returns -1.0 on error.
-float GetCPULoad()
-{
-    FILETIME idleTime, kernelTime, userTime;
-    return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime)+FileTimeToInt64(userTime)) : -1.0f;
+    hy_update_ui_layout(&g_rootFrame, (float)width, (float)height, 0, 0);
 }
 
 // Subsystem:console
@@ -217,7 +276,7 @@ int main(int argc, char *argv[])
         ExitProcess(0);
     }
     
-    camera2D = HyCamera2D_Create(1920, 1080, 0, 1);
+    camera2D = HyCamera2D_Create(1920, 1080, -1, 1);
     
     HyRenderer2D renderer = {0};
     HyRenderer2D_Init(&renderer);
@@ -234,19 +293,6 @@ int main(int argc, char *argv[])
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    vec4 white = { 1.0f, 1.0f, 1.0f, 1.0f };
-    vec4 bg0 = { 0.157f, 0.157f, 0.157f, 1.0f };
-    vec4 bg1 = { 0.235f, 0.22f, 0.212f, 1.0f };
-    vec4 red0 = { 0.8f, 0.141f, 0.114f, 1.0f };
-    vec4 red1 = { 0.984f, 0.286f, 0.204f, 1.0f };
-    vec4 green0 = { 0.596f, 0.592f, 0.102f, 1.0f };
-    vec4 green1 = { 0.722f, 0.733f, 0.149f, 1.0f };
-    vec4 blue0 = { 0.271f, 0.522f, 0.533f, 1.0f };
-    vec4 blue1 = { 0.514f, 0.647f, 0.596f, 1.0f };
-    float pad = 15.0f;
-    float border = 3.0f;
-    float ch = 35.0f;
     
     float lastTime = 0.0f;
     
@@ -314,7 +360,6 @@ int main(int argc, char *argv[])
             char cpuInfo[256] = {0};
             snprintf(cpuInfo, 256, "CPU Load: %f\nFrame Time: %f", currCpuLoad, dt);
             draw_debug_text(&renderer, cpuInfo, 12.0f, window.height - 258.0f, white);
-            
         }
         HyRenderer2D_EndScene(&renderer);
         
