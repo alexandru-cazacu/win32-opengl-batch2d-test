@@ -3,41 +3,29 @@
 set prjName=Hyped
 set target=Debug
 set files=%cd%\src\win32_hyper.c
-set binDir=%cd%\bin\Win-x64-%target%
-set binIntDir=%cd%\bin-int\Win-x64-%target%
+set buildDir=%cd%\build\Win-x64-%target%
 
-if not exist %binDir% mkdir %binDir%
-if not exist %binIntDir% mkdir %binIntDir%
-if not exist %binIntDir%\resources.res (
-    call rc -nologo -r -fo %binIntDir%\resources.res %cd%\resources\resources.rc
-)
+call .\3rd\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
-set sharedCompilerFlags=^
+set compilerFlags=^
     -Oi -MTd -Zi -GR- -EHa- -FC -nologo -std:c++17 ^
     -W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 -wd4101 ^
-    -Fe:%binDir%\%prjName% ^
-    -Fo:%binIntDir%\%prjName% ^
-    -Fm:%binDir%\%prjName% ^
-    -Fd:%binDir%\%prjName% ^
     -I %cd%\src ^
-    -I %cd%\deps ^
-    -I %cd%\deps\cglm\include ^
-    -I %cd%\resources ^
+    -I %cd%\3rd ^
+    -I %cd%\3rd\cglm\include ^
     -D HY_SLOW ^
-    -D HY_ENABLE_LOG ^
-    resources.res
+    -D HY_ENABLE_LOG
 
-set  sharedLinkerFlags=-WX -opt:ref -incremental:no -subsystem:console -LIBPATH:%binIntDir%
-set  sharedLibs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
+set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
+set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
 
-call .\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
+if not exist %buildDir% mkdir %buildDir%
+pushd %buildDir%
+	del *.pdb > NUL 2> NUL
+	cl %compilerFlags% %files% /link %linkerFlags% %libs% /out:%prjName%.exe
+popd
 
-cl %sharedCompilerFlags% %files% /link %sharedLinkerFlags% %sharedLibs%
-
-call .\ctime\ctime -end %prjName%_Win-x64-%target%.ctime %ERRORLEVEL%
-
-echo Program terminated with code %ERRORLEVEL%.
-EXIT /B %ERRORLEVEL%
+call .\3rd\ctime\ctime -end %prjName%_Win-x64-%target%.ctime %ERRORLEVEL%
 
 :: ╔════════════════╗
 :: ║ Compiler Flags ║

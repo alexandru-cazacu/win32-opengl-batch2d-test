@@ -6,4 +6,4 @@ echo Found location is %VSPATH%
 
 call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-set PATH=%cd%\deps\vcpkg\installed\x64-windows\debug\bin;%PATH%
+set PATH=%cd%\ctime;%PATH%

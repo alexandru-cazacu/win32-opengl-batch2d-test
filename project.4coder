@@ -16,7 +16,9 @@ blacklist_patterns = {
     ".*",
     "bin",
     "bin-int",
-    "vcpkg"
+    "build",
+    "vcpkg",
+    ".git",
 };
 
 load_paths_base = {
@@ -49,7 +51,7 @@ command_list = {
         .save_dirty_files = false,
         .cursor_at_end = false,
         .cmd = {
-            { ".\bin\Win-x64-Debug\Hyped.exe", .os = "win"   },
+            { ".\build\Win-x64-Debug\Hyped.exe", .os = "win"   },
         },
     },
     {
@@ -69,7 +71,7 @@ command_list = {
         .save_dirty_files = false,
         .cursor_at_end = false,
         .cmd = {
-            { ".\bin\Win-x64-Release\Hyped.exe", .os = "win"   },
+            { ".\build\Win-x64-Release\Hyped.exe", .os = "win"   },
         },
     },
     {
@@ -89,7 +91,7 @@ command_list = {
         .save_dirty_files = false,
         .cursor_at_end = false,
         .cmd = {
-            { ".\bin\Win-x64-Tests\Hyped.exe" , .os = "win" },
+            { ".\build\Win-x64-Tests\Hyped.exe" , .os = "win" },
         },
     },
     {

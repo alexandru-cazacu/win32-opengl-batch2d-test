@@ -4,6 +4,8 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java:
 // http://www.viva64.com
 
+#define MAINICON 101
+
 #define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
 #include <sdkddkver.h>
 
@@ -65,7 +67,6 @@
 #include "hy_types.c"
 #include "hy_time.c"
 #include "hy_log.c"
-#include "resources.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
@@ -199,7 +200,7 @@ internal int configHandler(void* user, const char* section, const char* name, co
             config->startMode = HyWindowStartMode_Fullscreen;
         }
     } else if (MATCH("misc", "user")) {
-        config->user = strdup(value);
+        config->user = _strdup(value);
     } else {
         return 0; /* unknown section/name, error */
     }
