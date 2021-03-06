@@ -12,4 +12,4 @@ void main()
 {
     int index = int(v_TexIndex);
     o_FragColor = texture(u_Textures[index], v_TexCoord) * v_VertexColor;
-}
+};

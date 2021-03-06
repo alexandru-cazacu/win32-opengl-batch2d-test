@@ -92,6 +92,7 @@
 #include "win32_window.c"
 #include "hy_file.c"
 #include "win32_renderer_opengl.c"
+#include "hy_ui.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
@@ -104,79 +105,6 @@ vec4  green0 = {0.596f, 0.592f, 0.102f, 1.0f};
 vec4  green1 = {0.722f, 0.733f, 0.149f, 1.0f};
 vec4  blue0 = {0.271f, 0.522f, 0.533f, 1.0f};
 vec4  blue1 = {0.514f, 0.647f, 0.596f, 1.0f};
-float pad = 15.0f;
-float border = 3.0f;
-float ch = 35.0f;
-
-typedef struct HyFrame HyFrame;
-
-struct HyFrame {
-    float width; // Internally or externally for
-    float height;
-    bool  fixedWidth;  // If true you must also set the width
-    bool  fixedHeight; // If true you must also set the height
-    
-    float padding;
-    
-    vec4     color;
-    float    posY;
-    float    posX;
-    HyFrame* left;
-    HyFrame* right;
-};
-
-global_variable HyFrame g_rootFrame;
-
-internal void hy_draw_ui_layout(HyRenderer2D* r, HyFrame* frame)
-{
-    if (!frame)
-        return;
-    
-    DrawQuad2C(r, (vec2){frame->posX, frame->posY}, (vec2){frame->width, frame->height}, frame->color);
-    
-    if (frame->left != NULL)
-        hy_draw_ui_layout(r, frame->left);
-    if (frame->right != NULL)
-        hy_draw_ui_layout(r, frame->right);
-}
-
-internal void hy_update_ui_layout(HyFrame* frame, float width, float height, float x, float y)
-{
-    frame->width = width;
-    frame->height = height;
-    frame->posX = x;
-    frame->posY = y;
-    
-    if (!frame->left && !frame->right) {
-        return;
-    }
-    
-    if (frame->left && !frame->right) {
-        hy_update_ui_layout(frame->left, width, height, x, y);
-        return;
-    }
-    
-    if (!frame->left && frame->right) {
-        hy_update_ui_layout(frame->right, width, height, x, y);
-        return;
-    }
-    
-    float remainingWidth = 0.0f;
-    if (frame->left->fixedWidth) {
-        remainingWidth = width - frame->left->width;
-        
-        hy_update_ui_layout(frame->left, frame->left->width, height, x, y);
-        hy_update_ui_layout(frame->right, remainingWidth, height, x + frame->left->width, y);
-    } else if (frame->right->fixedWidth) {
-        remainingWidth = width - frame->right->width;
-        
-        hy_update_ui_layout(frame->left, remainingWidth, height, x, y);
-        hy_update_ui_layout(frame->right, frame->right->width, height, x + frame->left->width, y);
-    } else {
-        hy_update_ui_layout(frame->left, width / 2.0f, height, x, y);
-        hy_update_ui_layout(frame->right, width / 2.0f, height, x + width / 2.0f, y);
-    }
-}
 
 typedef struct {
     HyWindowStartMode startMode;
@@ -212,7 +140,6 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
     GL_CALL(glViewport(0, 0, width, height));
-    hy_update_ui_layout(&g_rootFrame, (float)width, (float)height, 0, 0);
 }
 
 // Subsystem:console
