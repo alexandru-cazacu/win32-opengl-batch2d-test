@@ -17,7 +17,7 @@ set compilerFlags=^
 	resources.res
 
 set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
-set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
+set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib
 
 if not exist %buildDir% mkdir %buildDir%
 if not exist %buildDir%\resources.res (call rc -nologo -r -fo %buildDir%\resources.res %cd%\src\resources.rc)

@@ -10,8 +10,8 @@
 
 #define MAINICON 101
 
-#define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
-#include <sdkddkver.h>
+//#define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
+//#include <sdkddkver.h>
 
 // Disables unused Windows functions and makes build times faster.
 // Commented out the functions we actually need.
@@ -28,6 +28,7 @@
 #define VC_EXTRALEAN // Only for MFC, but who knows.
 #endif
 
+#if 0
 #define NOGDICAPMASKS
 //#define NOSYSMETRICS
 #define NOMENUS
@@ -48,7 +49,7 @@
 #define NOSCROLL
 #define NOSERVICE
 #define NOSOUND
-#define NOTEXTMETRIC
+//#define NOTEXTMETRIC
 #define NOWH
 #define NOCOMM
 #define NOKANJI
@@ -62,11 +63,14 @@
 #define NOTAPE
 #define NOMINMAX
 #define STRICT
+#endif
 
-#include <dwmapi.h>
-#include <shellapi.h>
 #include <windows.h>
 #include <windowsx.h>
+#include <shellapi.h>
+#include <uxtheme.h>
+#include <dwmapi.h>
+#include <versionhelpers.h>
 
 #include "hy_types.c"
 #include "hy_assert.c"
@@ -151,6 +155,11 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
     GL_CALL(glViewport(0, 0, width, height));
+    HyColor hcbg = hex_to_HyColor(bg);
+    HY_SetClearColorCmd(&hcbg);
+    HY_ClearCmd();
+    draw_debug_text("Resizing, you may want to keep drawing....", 20.0f, (float)height - 300, hex_to_HyColor(fg));
+    hy_swap_buffers(hyWindow);
 }
 
 // Subsystem:console
@@ -175,8 +184,8 @@ int main(int argc, char* argv[])
     HyFile* testFile = HY_ReadFile("src/win32_hyper.c");
     
     HyWindow window = {0};
-    HY_CreateWindow(&window, config.startMode, "Hyped");
-    HY_SetWindowSizeCallback(&window, SizeCallback);
+    hy_window_create_borderless(&window, config.startMode, "Hyped");
+    hy_set_window_size_callback(&window, SizeCallback);
     
     if (!&window) { // ?
         MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
@@ -200,7 +209,7 @@ int main(int argc, char* argv[])
     
     float lastTime = 0.0f;
     
-    while (!HY_WindowShouldClose(&window)) {
+    while (!hy_window_should_close(&window)) {
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
         
@@ -219,13 +228,16 @@ int main(int argc, char* argv[])
             cpuLoad = (float)GetCPULoad();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
-            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
+            draw_quad_2c((vec2){0.0f, (float)window.height - 50.0f}, (vec2){window.width, 50.0f}, hex_to_HyColor(fg));
             
-            draw_quad_2tc(12.0f, (float)window.height - 16 - 12, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
+            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - 50, hex_to_HyColor(fg));
             
-            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
-            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12, hex_to_HyColor(fg));
+            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - 50, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
             
+            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - 50, hex_to_HyColor(fg));
+            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - 50, hex_to_HyColor(fg));
+            
+#if 0
             // Debug info
             char glInfo[256] = {0};
             char drawInfo[256] = {0};
@@ -240,6 +252,7 @@ int main(int argc, char* argv[])
             draw_debug_text(glInfo, 12.0f, window.height - 28.0f, hex_to_HyColor(fg));
             draw_debug_text(drawInfo, 12.0f, window.height - 208.0f, hex_to_HyColor(fg));
             draw_debug_text(cpuInfo, 12.0f, window.height - 258.0f, hex_to_HyColor(fg));
+#endif
             
             hui_begin_row(); // App
             {
@@ -268,14 +281,16 @@ int main(int argc, char* argv[])
         }
         hy_renderer2d_end_scene();
         
-        HY_SwapBuffers(&window);
+        hy_swap_buffers(&window);
         
-        HY_PollEvents(&window);
+        hy_poll_events(&window);
         
         lastTime = currTime;
         
-        Sleep(1);
+        Sleep(10);
     }
+    
+    hy_window_destroy(&window);
     
     ExitProcess(0);
 }

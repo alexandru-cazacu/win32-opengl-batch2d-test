@@ -17,7 +17,7 @@ set compilerFlags=^
     -D HY_ENABLE_LOG
 
 set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
-set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib
+set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib
 
 if not exist %buildDir% mkdir %buildDir%
 pushd %buildDir%
