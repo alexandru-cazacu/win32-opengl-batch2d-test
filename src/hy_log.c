@@ -3,15 +3,6 @@
 #define LOG_USE_COLOR
 #include <log.c/log.c>
 
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_BOLD    "\x1b[1m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
 // Core log macros
 #define HY_CORE_TRACE(...) log_trace(__VA_ARGS__)
 #define HY_CORE_INFO(...)  log_info(__VA_ARGS__)
@@ -31,16 +22,16 @@ internal void HY_Log(const char* msg, const char* file, int line, const char* co
 
 internal void HY_LogInit()
 {
-  log_set_level(LOG_INFO);
-
-  if (IsDebuggerPresent()) {
-    HY_INFO("Debugger present");
-  } else {
-    HY_INFO("Debugger not found. Fallback on stdio.");
-    HY_INFO("Debugger not found. Assertion will silently crash.");
-  }
-
-  HY_INFO("[Logger] Initialized.");
+    log_set_level(LOG_INFO);
+    
+    if (IsDebuggerPresent()) {
+        HY_INFO("Debugger present");
+    } else {
+        HY_INFO("Debugger not found. Fallback on stdio.");
+        HY_INFO("Debugger not found. Assertion will silently crash.");
+    }
+    
+    HY_INFO("[Logger] Initialized.");
 }
 
 internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)

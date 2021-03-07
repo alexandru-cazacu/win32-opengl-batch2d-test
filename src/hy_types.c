@@ -24,7 +24,7 @@ typedef bool b32;
 #define Pi32 3.14159265359f
 
 #define internal        static /// Unity Build. For static functions.
-#define local_persist   static /// For static variables inside functions.
+#define local_persist   static /// Unity Build. For static variables inside functions.
 #define global_variable static /// Unity Build. For static variables inside files.
 
 #define HY_MOUSE_BUTTON_1      0
@@ -37,25 +37,6 @@ typedef bool b32;
 #define HY_MOUSE_BUTTON_RIGHT  HY_MOUSE_BUTTON_2
 #define HY_MOUSE_BUTTON_MIDDLE HY_MOUSE_BUTTON_3
 
-#if HY_SLOW
-#define HY_FASSERT(x)                                                                                                  \
-  if (!(x)) {                                                                                                          \
-    *(int*)0 = 0;                                                                                                      \
-  }
-#define HY_ASSERT(x, __VA_ARGS__)                                                                                      \
-  if (!(x)) {                                                                                                          \
-    if (IsDebuggerPresent())                                                                                           \
-      __debugbreak();                                                                                                  \
-    else {                                                                                                             \
-      HY_ERROR("Assertion failed but no debugger is attached." __VA_ARGS__);                                           \
-      *(int*)0 = 0;                                                                                                    \
-    }                                                                                                                  \
-  }
-#else // HY_SLOW
-#define HY_FASSERT(...)
-#define HY_ASSERT(...)
-#endif // HY_SLOW
-
 #define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
 
 #define Kilobytes(value) ((value)*1024)
@@ -63,11 +44,19 @@ typedef bool b32;
 #define Gigabytes(value) (Megabytes(value) * 1024)
 #define Terabytes(value) (Gigabytes(value) * 1024)
 
+// NOTE(alex): Assert that does't log, just crashes.
+#if HY_SLOW
+#define HY_FASSERT(x)                                                                                                  \
+if (!(x)) {                                                                                                          \
+*(int*)0 = 0;                                                                                                      \
+}
+#endif
+
 inline u32 SafeTruncateU64(u64 value)
 {
-  HY_FASSERT(value < 0xffffffff);
-  u32 result = (u32)value;
-  return result;
+    HY_FASSERT(value < 0xffffffff);
+    u32 result = (u32)value;
+    return result;
 }
 
 typedef enum HyError { HY_NO_ERROR, HY_NOT_INITIALIZED, HY_PLATFORM_ERROR } HyError;

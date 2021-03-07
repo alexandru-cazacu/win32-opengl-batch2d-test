@@ -2,10 +2,10 @@
 /// Metrics
 ///
 
-static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
+internal float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
 {
-    static unsigned long long _previousTotalTicks = 0;
-    static unsigned long long _previousIdleTicks = 0;
+    local_persist unsigned long long _previousTotalTicks = 0;
+    local_persist unsigned long long _previousIdleTicks = 0;
     
     unsigned long long totalTicksSinceLastTime = totalTicks - _previousTotalTicks;
     unsigned long long idleTicksSinceLastTime = idleTicks - _previousIdleTicks;
@@ -25,7 +25,7 @@ internal unsigned long long FileTimeToInt64(FILETIME ft)
 // Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in
 // between You'll need to call this at regular intervals, since it measures the
 // load between the previous call and the current one.  Returns -1.0 on error.
-float GetCPULoad()
+internal float GetCPULoad()
 {
     FILETIME idleTime, kernelTime, userTime;
     return GetSystemTimes(&idleTime, &kernelTime, &userTime)
@@ -37,34 +37,25 @@ float GetCPULoad()
 /// Memory
 ///
 
-#define hy_malloc(nbytes)        _hy_malloc(nbytes, __FUNCTION__)
-#define hy_calloc(count, nbytes) _hy_calloc(count, nbytes, __FUNCTION__)
-#define hy_realloc(p, nbytes)    _hy_realloc(p, nbytes, __FUNCTION__)
-#define hy_free(p)               _hy_free(p, __FUNCTION__)
-
-// TODO(alex): Replace VirtualAlloc with malloc
-// TODO(alex): Create memory allocator that overrides malloc
-// TODO(alex): Plot memory usage as a chart.
-
-void* _hy_malloc(size_t nbytes, char* funcName)
+internal void* _hy_malloc(size_t nbytes, char* funcName)
 {
     HY_INFO("%s \tmalloc(%d)", funcName, nbytes);
     return malloc(nbytes);
 }
 
-void* _hy_calloc(size_t count, size_t nbytes)
+internal void* _hy_calloc(size_t count, size_t nbytes, char* funcName)
 {
-    HY_INFO("\tcalloc");
+    HY_INFO("%s \tcalloc()", funcName);
     return calloc(count, nbytes);
 }
 
-void* _hy_realloc(void* p, size_t nbytes)
+internal void* _hy_realloc(void* p, size_t nbytes, char* funcName)
 {
-    HY_INFO("\trealloc");
+    HY_INFO("%s \trealloc", funcName);
     return realloc(p, nbytes);
 }
 
-void _hy_free(void* p, char* funcName)
+internal void _hy_free(void* p, char* funcName)
 {
     HY_INFO("%s \tfree()", funcName);
     free(p);
@@ -539,7 +530,7 @@ internal int HY_CreateWindow(HyWindow* hyWindow, HyWindowStartMode startMode, co
     // Load GL extensions list
     const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
     size_t      ext_string_length = strlen(extensions) + 1;
-    g_GlExtension = malloc(sizeof(char) * ext_string_length);
+    g_GlExtension = hy_malloc(sizeof(char) * ext_string_length);
     memcpy((void*)g_GlExtension, extensions, ext_string_length);
     HY_TRACE(g_GlExtension);
     

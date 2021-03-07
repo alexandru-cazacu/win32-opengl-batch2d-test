@@ -12,7 +12,7 @@ struct HyFrame {
     
     float padding;
     
-    vec4     color;
+    HyColor  color;
     float    posY;
     float    posX;
     HyFrame* left;

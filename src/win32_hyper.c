@@ -4,6 +4,10 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java:
 // http://www.viva64.com
 
+// TODO(alex): Indexed font rendering like 4coder.
+// TODO(alex): Font rendering with stb_truetype.
+// TODO(alex): Font caching (safe img to disk to avoid computing at startup).
+
 #define MAINICON 101
 
 #define _WIN32_WINNT 0x0601 // Targets Windows 7 or later
@@ -65,8 +69,10 @@
 #include <windowsx.h>
 
 #include "hy_types.c"
-#include "hy_time.c"
+#include "hy_assert.c"
 #include "hy_log.c"
+#include "hy_platform.h"
+#include "hy_time.c"
 
 #pragma warning(push)
 #pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
@@ -83,28 +89,23 @@
 #define FGL_IMPLEMENTATION
 #include <final_dynamic_opengl.h>
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_MALLOC(size)           hy_malloc(size)
+#define STBI_REALLOC(ptr,newsz)     hy_realloc(ptr, newsz)
+#define STBI_FREE(ptr)              hy_free(ptr)
 #include <stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
+#define STBIR_MALLOC(size,context) hy_malloc(size)
+#define STBIR_FREE(ptr,context)    hy_free(ptr)
 #include <stb_image_resize.h>
 
 #pragma warning(pop)
 
-#include "win32_window.c"
 #include "hy_file.c"
+#include "win32_platform.c"
 #include "win32_renderer_opengl.c"
 #include "hy_ui.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
-
-vec4  white = {1.0f, 1.0f, 1.0f, 1.0f};
-vec4  bg0 = {0.157f, 0.157f, 0.157f, 1.0f};
-vec4  bg1 = {0.235f, 0.22f, 0.212f, 1.0f};
-vec4  red0 = {0.8f, 0.141f, 0.114f, 1.0f};
-vec4  red1 = {0.984f, 0.286f, 0.204f, 1.0f};
-vec4  green0 = {0.596f, 0.592f, 0.102f, 1.0f};
-vec4  green1 = {0.722f, 0.733f, 0.149f, 1.0f};
-vec4  blue0 = {0.271f, 0.522f, 0.533f, 1.0f};
-vec4  blue1 = {0.514f, 0.647f, 0.596f, 1.0f};
 
 typedef struct {
     HyWindowStartMode startMode;
@@ -161,6 +162,11 @@ int main(int argc, char* argv[])
         HY_ERROR(".hypedrc not found");
     }
     
+    HyFile* testFile = HY_ReadFile("src/win32_hyper.c");
+    
+    HY_INFO("%s", testFile->data);
+    HY_INFO("%d", testFile->size);
+    
     HyWindow window = {0};
     HY_CreateWindow(&window, config.startMode, "Hyped");
     HY_SetWindowSizeCallback(&window, SizeCallback);
@@ -170,7 +176,7 @@ int main(int argc, char* argv[])
         ExitProcess(0);
     }
     
-    camera2D = HyCamera2D_Create(1920, 1080, -1, 1);
+    camera2D = HyCamera2D_Create((float)window.width, (float)window.height, -1, 1);
     
     HyRenderer2D renderer = {0};
     HyRenderer2D_Init(&renderer);
@@ -178,10 +184,10 @@ int main(int argc, char* argv[])
     HyTexture testTexture = {0};
     HyTexture testTexture1 = {0};
     HyTexture asciiTexture = {0};
+    HyTexture folderTexture = {0};
+    HyTexture_Create(&folderTexture, "assets/icons/folder.png", HyTextureFilterMode_Linear);
     HyTexture_Create(&testTexture, "assets/textures/container.png", HyTextureFilterMode_Linear);
     HyTexture_Create(&testTexture1, "assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-    // HyTexture_Create(&asciiTexture, "assets/textures/Fira Code.png",
-    // HyTextureFilterMode_Linear);
     HyTexture_Create(&asciiTexture, "assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
     
     renderer.asciiTexture = &asciiTexture;
@@ -205,13 +211,14 @@ int main(int argc, char* argv[])
             HY_SetClearColorCmd(&(HyColor){0.0f, 0.0f, 0.0f, 1.0f});
             HY_ClearCmd();
             
-            static int   count = 0;
-            static float cpuLoad = 0.0f;
-            static float currCpuLoad = 0.0f;
+            local_persist int   count = 0;
+            local_persist float cpuLoad = 0.0f;
+            local_persist float currCpuLoad = 0.0f;
             
             cpuLoad = (float)GetCPULoad();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
+#if 0
             DrawQuad3TC(&renderer, (vec3){500.0f, 300.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture, white);
             DrawQuad3TC(&renderer, (vec3){800.0f, 200.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture1, red0);
             
@@ -255,6 +262,15 @@ int main(int argc, char* argv[])
             char cpuInfo[256] = {0};
             snprintf(cpuInfo, 256, "CPU Load: %f\nFrame Time: %f", currCpuLoad, dt);
             draw_debug_text(&renderer, cpuInfo, 12.0f, window.height - 258.0f, white);
+#endif
+            DrawQuad2C(&renderer, (vec2){ 0.0f, 0.0f }, (vec2){ (float)window.width, (float)window.height }, hex_to_HyColor(bg));
+            draw_debug_text(&renderer, testFile->data, 312.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
+            
+            DrawQuad2TC(&renderer, (vec2){ 12.0f, (float)window.height - 16 - 12 }, (vec2){ 16, 16 }, &folderTexture, hex_to_HyColor(fg));
+            
+            draw_debug_text(&renderer, "Hyped", 30.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
+            draw_debug_text(&renderer, "src", 24.0f, (float)window.height - 16 * 2 - 12, hex_to_HyColor(fg));
+            //DrawQuad2C(&renderer, (vec2){ 12.0f, (float)window.height - 16 - 12 }, (vec2){ 16.0f, 16.0f }, hex_to_HyColor(green0));
         }
         HyRenderer2D_EndScene(&renderer);
         

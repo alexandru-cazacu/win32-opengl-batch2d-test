@@ -4,8 +4,7 @@
 
 internal void GLClearError()
 {
-    while (glGetError() != GL_NO_ERROR)
-        ;
+    while (glGetError() != GL_NO_ERROR);
 }
 
 internal int GLLogCall(const char* function, const char* file, int line)
@@ -83,20 +82,6 @@ internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id
              "  Severity: %s\n",
              id, message, sourceMessage, typeMessage, severityMessage);
 }
-
-//~ Colors
-
-internal float HyColor_White[] = {1.0f, 1.0f, 1.0f, 1.0f};
-internal float HyColor_Grey2[] = {0.2f, 0.2f, 0.2f, 1.0f};
-internal float HyColor_Grey1[] = {0.1f, 0.1f, 0.1f, 1.0f};
-internal float HyColor_Grey05[] = {0.05f, 0.05f, 0.05f, 1.0f};
-internal float HyColor_Grey[] = {0.1f, 0.1f, 0.1f, 1.0f};
-internal float HyColor_Black[] = {0.0f, 0.0f, 0.0f, 1.0f};
-internal float HyColor_Red[] = {1.0f, 0.0f, 0.0f, 1.0f};
-internal float HyColor_Green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-internal float HyColor_Blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
-internal float HyColor_Magenta[] = {1.0f, 0.0f, 1.0f, 1.0f};
-internal float HyColor_Transparent[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 //~ Textures
 
@@ -263,7 +248,36 @@ internal void HyFramebuffer_Unbind()
     GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
-//~ Camera
+//~
+/// Colors
+///
+
+uint32_t bg = 0x282828FF;
+uint32_t gray = 0x928374FF;
+uint32_t red0 = 0xCC241dFF;
+uint32_t red1 = 0xFB4939FF;
+uint32_t green0 = 0x98971AFF;
+uint32_t green1 = 0xB8BB26FF;
+uint32_t purple0 = 0xB16286FF;
+uint32_t purple1 = 0xD3869BFF;
+uint32_t aqua0 = 0x689D6AFF;
+uint32_t aqua1 = 0x8EC07CFF;
+uint32_t fg = 0xebdbb2ff;
+
+// TODO(alex): Remove?
+#if 0
+internal float HyColor_White[] = {1.0f, 1.0f, 1.0f, 1.0f};
+internal float HyColor_Grey2[] = {0.2f, 0.2f, 0.2f, 1.0f};
+internal float HyColor_Grey1[] = {0.1f, 0.1f, 0.1f, 1.0f};
+internal float HyColor_Grey05[] = {0.05f, 0.05f, 0.05f, 1.0f};
+internal float HyColor_Grey[] = {0.1f, 0.1f, 0.1f, 1.0f};
+internal float HyColor_Black[] = {0.0f, 0.0f, 0.0f, 1.0f};
+internal float HyColor_Red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+internal float HyColor_Green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+internal float HyColor_Blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
+internal float HyColor_Magenta[] = {1.0f, 0.0f, 1.0f, 1.0f};
+internal float HyColor_Transparent[] = {0.0f, 0.0f, 0.0f, 0.0f};
+#endif
 
 typedef struct {
     float r;
@@ -271,6 +285,21 @@ typedef struct {
     float b;
     float a;
 } HyColor;
+
+internal HyColor hex_to_HyColor(uint32_t val)
+{
+    HyColor result = {0};
+    result.r = ((val >> 24) & 0xff) / 255.0f;
+    result.g = ((val >> 16) & 0xff) / 255.0f;
+    result.b = ((val >> 8) & 0xff) / 255.0f;
+    result.a = ((val) & 0xff) / 255.0f;
+    
+    return result;
+}
+
+//~
+/// Camera
+///
 
 typedef struct {
     mat4 projectionMatrix;
@@ -781,7 +810,7 @@ internal HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane
 typedef struct {
     vec3  Pos;
     float TexIndex;
-    vec4  Color;
+    HyColor Color;
     vec2  TexCoord;
 } HyQuadVertex;
 
@@ -980,7 +1009,7 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
     renderer->stats.drawCount++;
 }
 
-internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, vec4 color, float tx,
+internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color, float tx,
                            float ty, float tw, float th)
 {
     // Checks if we have room in our current batch for more quads.
@@ -1008,26 +1037,26 @@ internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTextur
     }
     
     glm_vec3_copy((vec3){pos[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){tx, ty}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){tx + tw, ty}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){tx + tw, ty + th}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){tx, ty + th}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
@@ -1035,7 +1064,7 @@ internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTextur
     renderer->stats.quadCount++;
 }
 
-internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, vec4 color)
+internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color)
 {
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
@@ -1062,26 +1091,26 @@ internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture
     }
     
     glm_vec3_copy((vec3){pos[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){0.0f, 0.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){1.0f, 0.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){1.0f, 1.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){0.0f, 1.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
@@ -1089,7 +1118,7 @@ internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture
     renderer->stats.quadCount++;
 }
 
-internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color)
+internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, HyColor color)
 {
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
@@ -1099,26 +1128,26 @@ internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color
     }
     
     glm_vec3_copy(pos, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){0.0f, 0.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){1.0f, 0.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0] + size[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){1.0f, 1.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
     glm_vec3_copy((vec3){pos[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
-    glm_vec4_copy(color, renderer->quadVertexBufferPtr->Color);
     glm_vec2_copy((vec2){0.0f, 1.0f}, renderer->quadVertexBufferPtr->TexCoord);
+    renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = (float)renderer->whiteTextureSlot;
     renderer->quadVertexBufferPtr++;
     
@@ -1126,7 +1155,7 @@ internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, vec4 color
     renderer->stats.quadCount++;
 }
 
-internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float x, float y, vec4 color)
+internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float x, float y, HyColor color)
 {
     int   cellsPerRow = 10;
     int   cellsPerCol = 10;
@@ -1145,6 +1174,10 @@ internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float 
             xOffset = 0;
             continue;
         }
+        if (c == '\r') {
+            c = string[++i];
+            continue;
+        }
         
         c -= (char)firstCharIndex;
         
@@ -1155,21 +1188,23 @@ internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float 
         float cx = (float)((c % cellsPerRow) - 1) * cw;
         float cy = (cellsPerCol - (float)ceil((float)c / (float)cellsPerCol)) * ch;
         
-        DrawQuad3TCC(renderer, (vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f}, (vec2){charWidth, charWidth},
-                     renderer->asciiTexture, color, cx, cy, cw, ch);
+        DrawQuad3TCC(renderer, (vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f},
+                     (vec2){charWidth, charWidth},
+                     renderer->asciiTexture, color,
+                     cx, cy, cw, ch);
         
         c = string[++i];
         xOffset++;
     }
 }
 
-internal void DrawQuad2TC(HyRenderer2D* renderer, vec2 pos, vec2 size, HyTexture* hyTexture, vec4 color)
+internal void DrawQuad2TC(HyRenderer2D* renderer, vec2 pos, vec2 size, HyTexture* hyTexture, HyColor color)
 {
     vec3 temp = {pos[0], pos[1], 1.0f};
     DrawQuad3TC(renderer, temp, size, hyTexture, color);
 }
 
-internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, vec4 color)
+internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, HyColor color)
 {
     vec3 tempPos = {pos[0], pos[1], 0.0f};
     DrawQuad3C(renderer, tempPos, size, color);

@@ -1,5 +1,5 @@
 typedef struct {
-    void* data;
+    char* data;
     u32   size;
 } HyFile;
 
@@ -19,7 +19,7 @@ internal HyFile* HY_ReadFile(const char* fileName)
         LARGE_INTEGER fileSize;
         if (GetFileSizeEx(fileHandle, &fileSize)) {
             u32 fileSize32 = SafeTruncateU64(fileSize.QuadPart);
-            result->data = hy_malloc(fileSize32);
+            result->data = hy_malloc(fileSize32 + 1);
             if (result->data) {
                 DWORD bytesRead;
                 // NOTE(alex): the reason for the second check is because someone may
@@ -27,6 +27,7 @@ internal HyFile* HY_ReadFile(const char* fileName)
                 // would result.Data in a file size greater than the bytes read.
                 if (ReadFile(fileHandle, result->data, fileSize32, &bytesRead, 0) && (fileSize32 == bytesRead)) {
                     result->size = fileSize32;
+                    result->data[result->size] = '\0';
                 } else {
                     // TODO(alex): logging
                     hy_free(result->data);
