@@ -17,10 +17,10 @@
 #define HY_ERROR(...) log_error(__VA_ARGS__)
 #define HY_FATAL(...) log_fatal(__VA_ARGS__)
 
-internal void HY_LogInit();
-internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level);
+internal void hy_log_init();
+internal void hy_log(const char* msg, const char* file, int line, const char* color, const char* level);
 
-internal void HY_LogInit()
+internal void hy_log_init()
 {
     log_set_level(LOG_INFO);
     
@@ -34,7 +34,7 @@ internal void HY_LogInit()
     HY_INFO("[Logger] Initialized.");
 }
 
-internal void HY_Log(const char* msg, const char* file, int line, const char* color, const char* level)
+internal void hy_log(const char* msg, const char* file, int line, const char* color, const char* level)
 {
 }
 
@@ -53,7 +53,7 @@ internal void HY_Log(const char* msg, const char* file, int line, const char* co
 #define HY_ERROR(...)
 #define HY_FATAL(...)
 
-internal void HY_LogInit()
+internal void hy_log_init()
 {
 }
 

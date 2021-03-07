@@ -21,17 +21,37 @@ struct HyFrame {
 
 global_variable HyFrame g_rootFrame;
 
-internal void hy_draw_ui_layout(HyRenderer2D* r, HyFrame* frame)
+internal void hui_begin_row()
+{
+    
+}
+
+internal void hui_end_row()
+{
+    
+}
+
+internal void hui_begin_col()
+{
+    
+}
+
+internal void hui_end_col()
+{
+    
+}
+
+internal void hy_draw_ui_layout(HyFrame* frame)
 {
     if (!frame)
         return;
     
-    DrawQuad2C(r, (vec2){frame->posX, frame->posY}, (vec2){frame->width, frame->height}, frame->color);
+    draw_quad_2c((vec2){frame->posX, frame->posY}, (vec2){frame->width, frame->height}, frame->color);
     
     if (frame->left != NULL)
-        hy_draw_ui_layout(r, frame->left);
+        hy_draw_ui_layout(frame->left);
     if (frame->right != NULL)
-        hy_draw_ui_layout(r, frame->right);
+        hy_draw_ui_layout(frame->right);
 }
 
 internal void hy_update_ui_layout(HyFrame* frame, float width, float height, float x, float y)

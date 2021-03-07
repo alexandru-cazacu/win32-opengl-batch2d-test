@@ -88,15 +88,25 @@
 
 #define FGL_IMPLEMENTATION
 #include <final_dynamic_opengl.h>
+
+// STB Image
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(size)           hy_malloc(size)
 #define STBI_REALLOC(ptr,newsz)     hy_realloc(ptr, newsz)
 #define STBI_FREE(ptr)              hy_free(ptr)
 #include <stb_image.h>
+
+// STB Image resize
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STBIR_MALLOC(size,context) hy_malloc(size)
 #define STBIR_FREE(ptr,context)    hy_free(ptr)
 #include <stb_image_resize.h>
+
+// STB Truetype
+#define STB_TRUETYPE_IMPLEMENTATION
+#define STBTT_MALLOC(size,context) hy_malloc(size)
+#define STBTT_FREE(ptr,context)    hy_free(ptr)
+#include <stb_truetype.h>
 
 #pragma warning(pop)
 
@@ -146,8 +156,8 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
 // Subsystem:console
 int main(int argc, char* argv[])
 {
-    HY_LogInit();
-    HY_Timer_Init();
+    hy_log_init();
+    hy_timer_init();
     
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
@@ -164,33 +174,26 @@ int main(int argc, char* argv[])
     
     HyFile* testFile = HY_ReadFile("src/win32_hyper.c");
     
-    HY_INFO("%s", testFile->data);
-    HY_INFO("%d", testFile->size);
-    
     HyWindow window = {0};
     HY_CreateWindow(&window, config.startMode, "Hyped");
     HY_SetWindowSizeCallback(&window, SizeCallback);
     
-    if (!&window) {
+    if (!&window) { // ?
         MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
         ExitProcess(0);
     }
     
     camera2D = HyCamera2D_Create((float)window.width, (float)window.height, -1, 1);
     
-    HyRenderer2D renderer = {0};
-    HyRenderer2D_Init(&renderer);
+    hy_renderer2d_init();
     
-    HyTexture testTexture = {0};
-    HyTexture testTexture1 = {0};
-    HyTexture asciiTexture = {0};
-    HyTexture folderTexture = {0};
-    HyTexture_Create(&folderTexture, "assets/icons/folder.png", HyTextureFilterMode_Linear);
-    HyTexture_Create(&testTexture, "assets/textures/container.png", HyTextureFilterMode_Linear);
-    HyTexture_Create(&testTexture1, "assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-    HyTexture_Create(&asciiTexture, "assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    HyTexture* testTexture = hy_texture_create("assets/textures/container.png", HyTextureFilterMode_Linear);
+    HyTexture* testTexture1 = hy_texture_create("assets/textures/container_specular.png", HyTextureFilterMode_Linear);
+    HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    HyTexture* folderTexture = hy_texture_create("assets/icons/folder.png", HyTextureFilterMode_Linear);
     
-    renderer.asciiTexture = &asciiTexture;
+    // TODO(alex): Move into renderer init struct
+    g_renderer.asciiTexture = asciiTexture;
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -198,81 +201,72 @@ int main(int argc, char* argv[])
     float lastTime = 0.0f;
     
     while (!HY_WindowShouldClose(&window)) {
-        float currTime = HY_Timer_GetMilliseconds();
+        float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
         
-        HyRenderer2DStats stats = HyRenderer2D_GetStats(&renderer);
+        HyRenderer2DStats stats = hy_renderer2d_get_stats();
         
-        HyRenderer2D_ResetStats(&renderer);
-        HyRenderer2D_BeginScene(&renderer, &camera2D);
+        hy_renderer2d_reset_stats();
+        hy_renderer2d_begin_scene(&camera2D);
         {
-            vec2 pointer = {border + pad, 1000.0f - pad - border - ch};
-            
-            HY_SetClearColorCmd(&(HyColor){0.0f, 0.0f, 0.0f, 1.0f});
+            HyColor hcbg = hex_to_HyColor(bg);
+            HY_SetClearColorCmd(&hcbg);
             HY_ClearCmd();
             
-            local_persist int   count = 0;
             local_persist float cpuLoad = 0.0f;
             local_persist float currCpuLoad = 0.0f;
             
             cpuLoad = (float)GetCPULoad();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
-#if 0
-            DrawQuad3TC(&renderer, (vec3){500.0f, 300.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture, white);
-            DrawQuad3TC(&renderer, (vec3){800.0f, 200.0f, 0.0f}, (vec2){700.0f, 700.0f}, &testTexture1, red0);
+            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
             
-            for (uint32_t y = 0; y < 2000; ++y) {
-                for (uint32_t x = 0; x < 100; ++x) {
-                    DrawQuad3TC(&renderer, (vec3){500 + x * 30.0f, y * 30.0f, 0.0f}, (vec2){25.0f, 25.0f}, &testTexture, green1);
-                }
-            }
+            draw_quad_2tc(12.0f, (float)window.height - 16 - 12, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
             
-            DrawQuad2C(&renderer, (vec3){0.0f, 0.0f}, (vec2){400.0f, 1000.0f}, bg1);
-            DrawQuad2C(&renderer, (vec3){border, border}, (vec2){400.0f - border * 2.0f, 1000.0f - border * 2.0f}, bg0);
+            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
+            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12, hex_to_HyColor(fg));
             
-            DrawQuad2C(&renderer, pointer, (vec2){250.0f, ch}, green0);
-            DrawQuad2C(&renderer, pointer, (vec2){250.0f / 32.0f * dt, ch}, green1);
-            pointer[1] -= (pad + ch);
-            
-            DrawQuad2C(&renderer, pointer, (vec2){250.0f, ch}, blue0);
-            DrawQuad2C(&renderer, pointer, (vec2){250.0f * currCpuLoad, ch}, blue1);
-            pointer[1] -= (pad + ch);
-            
-            DrawQuad2C(&renderer, pointer, (vec2){250.0f, ch}, bg1);
-            DrawQuad2C(&renderer, (vec2){pointer[0] + border, pointer[1] + border},
-                       (vec2){250.0f - border * 2.0f, ch - border * 2.0f}, bg0);
-            pointer[1] -= (pad + ch);
-            
-            count++;
-            
-            DrawQuad2C(&renderer, (vec2){0.0f, (float)window.height - 300.0f}, (vec2){600.0f, 300.0f}, bg1);
-            
+            // Debug info
             char glInfo[256] = {0};
+            char drawInfo[256] = {0};
+            char cpuInfo[256] = {0};
             snprintf(glInfo, 256,
                      "Vendor         : %s\nRenderer       : %s\nOpenGL version : "
                      "%s\nGLSL version   : %s",
                      window.glVendor, window.glRenderer, window.glVersion, window.glGLSL);
-            draw_debug_text(&renderer, glInfo, 12.0f, window.height - 28.0f, white);
-            
-            char drawInfo[256] = {0};
             snprintf(drawInfo, 256, "Renderer Draws: %d Quads: %d", stats.drawCount, stats.quadCount);
-            draw_debug_text(&renderer, drawInfo, 12.0f, window.height - 208.0f, white);
-            
-            char cpuInfo[256] = {0};
             snprintf(cpuInfo, 256, "CPU Load: %f\nFrame Time: %f", currCpuLoad, dt);
-            draw_debug_text(&renderer, cpuInfo, 12.0f, window.height - 258.0f, white);
-#endif
-            DrawQuad2C(&renderer, (vec2){ 0.0f, 0.0f }, (vec2){ (float)window.width, (float)window.height }, hex_to_HyColor(bg));
-            draw_debug_text(&renderer, testFile->data, 312.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
+            draw_quad_2c((vec2){0.0f, (float)window.height - 300.0f}, (vec2){600.0f, 300.0f}, hex_to_HyColor(bg));
+            draw_debug_text(glInfo, 12.0f, window.height - 28.0f, hex_to_HyColor(fg));
+            draw_debug_text(drawInfo, 12.0f, window.height - 208.0f, hex_to_HyColor(fg));
+            draw_debug_text(cpuInfo, 12.0f, window.height - 258.0f, hex_to_HyColor(fg));
             
-            DrawQuad2TC(&renderer, (vec2){ 12.0f, (float)window.height - 16 - 12 }, (vec2){ 16, 16 }, &folderTexture, hex_to_HyColor(fg));
-            
-            draw_debug_text(&renderer, "Hyped", 30.0f, (float)window.height - 16 - 12, hex_to_HyColor(fg));
-            draw_debug_text(&renderer, "src", 24.0f, (float)window.height - 16 * 2 - 12, hex_to_HyColor(fg));
-            //DrawQuad2C(&renderer, (vec2){ 12.0f, (float)window.height - 16 - 12 }, (vec2){ 16.0f, 16.0f }, hex_to_HyColor(green0));
+            hui_begin_row(); // App
+            {
+                hui_begin_row(); // App bar
+                {
+                    
+                }
+                hui_end_row();
+                hui_begin_row(); // Content
+                {
+                    hui_begin_col(); // Activity Col
+                    hui_end_col();
+                    hui_begin_col(); // Explorer Col
+                    hui_end_col();
+                    hui_begin_col(); // Documents Col
+                    hui_end_col();
+                }
+                hui_end_row();
+                hui_begin_row(); // Status bar
+                {
+                    
+                }
+                hui_end_row();
+            }
+            hui_end_row();
         }
-        HyRenderer2D_EndScene(&renderer);
+        hy_renderer2d_end_scene();
         
         HY_SwapBuffers(&window);
         

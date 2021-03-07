@@ -2,12 +2,12 @@
 /// OpenGL Error handling
 ///
 
-internal void GLClearError()
+internal void hy_gl_clear_error()
 {
     while (glGetError() != GL_NO_ERROR);
 }
 
-internal int GLLogCall(const char* function, const char* file, int line)
+internal int hy_gl_log_call(const char* function, const char* file, int line)
 {
     GLenum errorCode = glGetError();
     while (errorCode) {
@@ -33,9 +33,9 @@ HY_FATAL("Assert!\n");                                                          
 __debugbreak();                                                                                                    \
 }
 #define GL_CALL(x)                                                                                                     \
-GLClearError();                                                                                                      \
+hy_gl_clear_error();                                                                                                      \
 x;                                                                                                                   \
-ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+ASSERT(hy_gl_log_call(#x, __FILE__, __LINE__))
 
 internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length,
                                      const char* message, const void* userParam)
@@ -95,19 +95,19 @@ typedef struct {
 
 typedef enum HyTextureFilterMode { HyTextureFilterMode_Linear, HyTextureFilterMode_Nearest } HyTextureFilterMode;
 
-internal HyError HyTexture_Create(HyTexture* texture, const char* path, HyTextureFilterMode filter)
+internal HyTexture* hy_texture_create(const char* path, HyTextureFilterMode filter)
 {
     // TODO(alex): Make Linear the default filter mode?
+    
+    HyTexture* result = hy_malloc(sizeof(HyTexture));
     
     // TODO(alex): Move in asset manager initialization.
     stbi_set_flip_vertically_on_load(true);
     
-    HyError      result = HY_NO_ERROR;
-    unsigned int textureID;
+    uint32_t textureID;
     GL_CALL(glGenTextures(1, &textureID));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, textureID));
-    // set the texture wrapping/filtering options (on the currently bound texture
-    // object)
+    // set the texture wrapping/filtering options (on the currently bound texture object)
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
     
@@ -121,39 +121,36 @@ internal HyError HyTexture_Create(HyTexture* texture, const char* path, HyTextur
     }
     
     // load and generate the texture
-    uint32_t       width, height, nrChannels = 0;
+    uint32_t width, height, nrChannels = 0;
     unsigned char* data = stbi_load(path, &(int)width, &(int)height, &(int)nrChannels, 0);
     if (data) {
         uint32_t glChannels = nrChannels == 4 ? GL_RGBA : GL_RGB;
         GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, glChannels, GL_UNSIGNED_BYTE, data));
         GL_CALL(glGenerateMipmap(GL_TEXTURE_2D));
         
-        texture->rendererID = textureID;
-        texture->width = width;
-        texture->height = height;
-        texture->channels = nrChannels;
-        texture->path = path;
-    } else {
+        result->rendererID = textureID;
+        result->width = width;
+        result->height = height;
+        result->channels = nrChannels;
+        result->path = path;
+        
+        stbi_image_free(data);
+    } else { // Fallback debug texture.
         uint32_t dt[] = {
-            0xff000000,
-            0xffffffff,
-            0xffffffff,
-            0xff000000,
+            0xff0000ff, // ABGR
+            0xff0000ff,
+            0xff0000ff,
+            0xff0000ff,
         };
         GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, dt));
         GL_CALL(glGenerateMipmap(GL_TEXTURE_2D));
         
-        texture->rendererID = textureID;
-        texture->width = 2;
-        texture->height = 2;
-        texture->channels = 4;
-        texture->path = path;
-        
-        // TODO(alex): First read data, then create GPU info
-        // TODO(alex): Delete texture
-        result = -1;
+        result->rendererID = textureID;
+        result->width = 2;
+        result->height = 2;
+        result->channels = 4;
+        result->path = path;
     }
-    stbi_image_free(data);
     
     GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
     
@@ -162,7 +159,12 @@ internal HyError HyTexture_Create(HyTexture* texture, const char* path, HyTextur
     // TODO(alex): Delete texture when?
 }
 
-internal void HyTexture_Bind(HyTexture* texture, uint32_t location)
+internal void hy_texture_destroy(HyTexture* texture)
+{
+    GL_CALL(glDeleteTextures(1, &texture->rendererID));
+}
+
+internal void hy_texture_bind(HyTexture* texture, uint32_t location)
 {
     GL_CALL(glActiveTexture(GL_TEXTURE0 + location));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->rendererID));
@@ -770,7 +772,7 @@ internal void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
 }
 #endif
 
-//~ Renderer 2D
+//~ Renderer2D
 
 typedef struct {
     mat4 projectionMatrix;
@@ -848,25 +850,29 @@ typedef struct {
     HyRenderer2DStats stats;
 } HyRenderer2D;
 
-internal void HyRenderer2D_Init(HyRenderer2D* renderer);
-internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer);
-internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera);
-internal void HyRenderer2D_EndScene(HyRenderer2D* renderer);
-internal void HyRenderer2D_Flush(HyRenderer2D* renderer);
+global_variable HyRenderer2D g_renderer;
 
-internal HyRenderer2DStats HyRenderer2D_GetStats(HyRenderer2D* renderer)
+internal void hy_renderer2d_init();
+internal void hy_renderer2d_shutdown();
+internal void hy_renderer2d_begin_scene(HyCamera2D* camera);
+internal void hy_renderer2d_end_scene();
+internal void hy_renderer2d_flush();
+
+internal HyRenderer2DStats hy_renderer2d_get_stats()
 {
-    return renderer->stats;
+    return g_renderer.stats;
 }
 
-internal void HyRenderer2D_ResetStats(HyRenderer2D* renderer)
+internal void hy_renderer2d_reset_stats()
 {
-    memset(&renderer->stats, 0, sizeof(HyRenderer2DStats));
+    memset(&g_renderer.stats, 0, sizeof(HyRenderer2DStats));
 }
 
-internal void HyRenderer2D_Init(HyRenderer2D* renderer)
+internal void hy_renderer2d_init()
 {
-    HY_ASSERT(!renderer->quadVertexBufferBase, "Called HyRenderer2D_Init more than once.");
+    HyRenderer2D* renderer = &g_renderer;
+    
+    HY_ASSERT(!renderer->quadVertexBufferBase, "Called hy_renderer2d_Init more than once.");
     
     // TODO(alex): Check if error callback is supported
     glEnable(GL_DEBUG_OUTPUT);
@@ -946,10 +952,10 @@ internal void HyRenderer2D_Init(HyRenderer2D* renderer)
         renderer->textureSlots[i] = 0;
     }
     
-    HyRenderer2D_ResetStats(renderer);
+    hy_renderer2d_reset_stats(renderer);
 }
 
-internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
+internal void hy_renderer2d_shutdown(HyRenderer2D* renderer)
 {
     GL_CALL(glDeleteVertexArrays(1, &renderer->vao));
     GL_CALL(glDeleteBuffers(1, &renderer->vbo));
@@ -960,8 +966,10 @@ internal void HyRenderer2D_Shutdown(HyRenderer2D* renderer)
     GL_CALL(glDeleteTextures(1, &renderer->whiteTexture));
 }
 
-internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera)
+internal void hy_renderer2d_begin_scene(HyCamera2D* camera)
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     if (camera) {
         renderer->camera = camera;
     }
@@ -982,20 +990,24 @@ internal void HyRenderer2D_BeginScene(HyRenderer2D* renderer, HyCamera2D* camera
     GL_CALL(glUniform1iv(loc, 32, samplers));
 }
 
-internal void HyRenderer2D_EndScene(HyRenderer2D* renderer)
+internal void hy_renderer2d_end_scene()
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     uint32_t size = (uint32_t)((uint8_t*)renderer->quadVertexBufferPtr - (uint8_t*)renderer->quadVertexBufferBase);
     
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo));
     GL_CALL(glBufferSubData(GL_ARRAY_BUFFER, 0, size, renderer->quadVertexBufferBase));
     
-    HyRenderer2D_Flush(renderer);
+    hy_renderer2d_flush();
 }
 
 // TODO(alex): Search how to draw 1 million quads with memory mapped buffers.
 // Currently we can do 200k quads @60fps.
-internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
+internal void hy_renderer2d_flush()
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i) {
         GL_CALL(glBindTextureUnit(i, renderer->textureSlots[i]));
         // GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
@@ -1009,14 +1021,16 @@ internal void HyRenderer2D_Flush(HyRenderer2D* renderer)
     renderer->stats.drawCount++;
 }
 
-internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color, float tx,
-                           float ty, float tw, float th)
+internal void draw_quad_3tcc(vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color, float tx,
+                             float ty, float tw, float th)
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31) {
-        HyRenderer2D_EndScene(renderer);
-        HyRenderer2D_BeginScene(renderer, NULL);
+        hy_renderer2d_end_scene();
+        hy_renderer2d_begin_scene(NULL);
     }
     
     float textureIndex = 0.0f;
@@ -1064,13 +1078,15 @@ internal void DrawQuad3TCC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTextur
     renderer->stats.quadCount++;
 }
 
-internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color)
+internal void draw_quad_3tc(vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color)
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount || renderer->textureSlotIndex > 31) {
-        HyRenderer2D_EndScene(renderer);
-        HyRenderer2D_BeginScene(renderer, NULL);
+        hy_renderer2d_end_scene();
+        hy_renderer2d_begin_scene(NULL);
     }
     
     float textureIndex = 0.0f;
@@ -1118,13 +1134,15 @@ internal void DrawQuad3TC(HyRenderer2D* renderer, vec3 pos, vec2 size, HyTexture
     renderer->stats.quadCount++;
 }
 
-internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, HyColor color)
+internal void draw_quad_3c(vec3 pos, vec2 size, HyColor color)
 {
+    HyRenderer2D* renderer = &g_renderer;
+    
     // Checks if we have room in our current batch for more quads.
     // 31 because the first one is a 1x1 white texture
     if (renderer->quadIndexCount >= renderer->maxIndexCount) {
-        HyRenderer2D_EndScene(renderer);
-        HyRenderer2D_BeginScene(renderer, NULL);
+        hy_renderer2d_end_scene();
+        hy_renderer2d_begin_scene(NULL);
     }
     
     glm_vec3_copy(pos, renderer->quadVertexBufferPtr->Pos);
@@ -1155,8 +1173,22 @@ internal void DrawQuad3C(HyRenderer2D* renderer, vec3 pos, vec2 size, HyColor co
     renderer->stats.quadCount++;
 }
 
-internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float x, float y, HyColor color)
+internal void draw_quad_2tc(float x, float y, vec2 size, HyTexture* hyTexture, HyColor color)
 {
+    vec3 temp = { x, y, 1.0f };
+    draw_quad_3tc(temp, size, hyTexture, color);
+}
+
+internal void draw_quad_2c(vec2 pos, vec2 size, HyColor color)
+{
+    vec3 tempPos = {pos[0], pos[1], 0.0f};
+    draw_quad_3c(tempPos, size, color);
+}
+
+internal void draw_debug_text(const char* string, float x, float y, HyColor color)
+{
+    HyRenderer2D* renderer = &g_renderer;
+    
     int   cellsPerRow = 10;
     int   cellsPerCol = 10;
     int   firstCharIndex = 31;
@@ -1188,26 +1220,14 @@ internal void draw_debug_text(HyRenderer2D* renderer, const char* string, float 
         float cx = (float)((c % cellsPerRow) - 1) * cw;
         float cy = (cellsPerCol - (float)ceil((float)c / (float)cellsPerCol)) * ch;
         
-        DrawQuad3TCC(renderer, (vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f},
-                     (vec2){charWidth, charWidth},
-                     renderer->asciiTexture, color,
-                     cx, cy, cw, ch);
+        draw_quad_3tcc((vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f},
+                       (vec2){charWidth, charWidth},
+                       renderer->asciiTexture, color,
+                       cx, cy, cw, ch);
         
         c = string[++i];
         xOffset++;
     }
-}
-
-internal void DrawQuad2TC(HyRenderer2D* renderer, vec2 pos, vec2 size, HyTexture* hyTexture, HyColor color)
-{
-    vec3 temp = {pos[0], pos[1], 1.0f};
-    DrawQuad3TC(renderer, temp, size, hyTexture, color);
-}
-
-internal void DrawQuad2C(HyRenderer2D* renderer, vec2 pos, vec2 size, HyColor color)
-{
-    vec3 tempPos = {pos[0], pos[1], 0.0f};
-    DrawQuad3C(renderer, tempPos, size, color);
 }
 
 internal void HY_SetClearColorCmd(HyColor* color)
