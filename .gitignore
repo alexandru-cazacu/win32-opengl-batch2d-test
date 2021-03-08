@@ -1,4 +1,5 @@
 /bin
 /bin-int
 /build
+/docs/html
 *.ctime
