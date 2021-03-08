@@ -1,3 +1,4 @@
+#if 0
 float pad = 15.0f;
 float border = 3.0f;
 float ch = 35.0f;
@@ -91,3 +92,4 @@ internal void hy_update_ui_layout(HyFrame* frame, float width, float height, flo
         hy_update_ui_layout(frame->right, width / 2.0f, height, x + width / 2.0f, y);
     }
 }
+#endif

@@ -281,6 +281,7 @@ internal float HyColor_Magenta[] = {1.0f, 0.0f, 1.0f, 1.0f};
 internal float HyColor_Transparent[] = {0.0f, 0.0f, 0.0f, 0.0f};
 #endif
 
+/// RGBA float colors.
 typedef struct {
     float r;
     float g;
@@ -774,6 +775,7 @@ internal void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
 
 //~ Renderer2D
 
+/// Camera 2D used for rendering.
 typedef struct {
     mat4 projectionMatrix;
     mat4 viewMatrix;
@@ -816,11 +818,13 @@ typedef struct {
     vec2  TexCoord;
 } HyQuadVertex;
 
+/// Batch 2D Renderer stats. Start/reset must be managed manually.
 typedef struct {
     uint32_t drawCount;
     uint32_t quadCount;
 } HyRenderer2DStats;
 
+/// Batch 2D Renderer.
 typedef struct {
     HyCamera2D* camera;
     
@@ -857,6 +861,9 @@ internal void hy_renderer2d_shutdown();
 internal void hy_renderer2d_begin_scene(HyCamera2D* camera);
 internal void hy_renderer2d_end_scene();
 internal void hy_renderer2d_flush();
+
+internal HyRenderer2DStats hy_renderer2d_get_stats();
+internal void hy_renderer2d_reset_stats();
 
 internal HyRenderer2DStats hy_renderer2d_get_stats()
 {

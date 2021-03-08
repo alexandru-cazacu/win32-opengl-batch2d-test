@@ -79,7 +79,6 @@
 #include "hy_assert.c"
 #include "hy_log.c"
 #include "hy_platform.h"
-#include "hy_time.c"
 
 #pragma warning(push)
 #pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
@@ -118,12 +117,13 @@
 #pragma warning(pop)
 
 #include "hy_file.c"
-#include "win32_platform.c"
-#include "win32_renderer_opengl.c"
+#include "hy_platform_win32.c"
+#include "hy_renderer_win32_ogl.c"
 #include "hy_ui.c"
 
 // TODO(alex): What is the right way to add an icon without Visual Studio?
 
+/// Engine startup configuration read from .hyperrc
 typedef struct {
     HyWindowStartMode startMode;
     const char*       user;
@@ -201,7 +201,9 @@ int main(int argc, char* argv[])
     
     HyTexture* testTexture = hy_texture_create("assets/textures/container.png", HyTextureFilterMode_Linear);
     HyTexture* testTexture1 = hy_texture_create("assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-    HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    //HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    //HyTexture* asciiTexture = hy_texture_create("assets/textures/FiraCode-Medium.png", HyTextureFilterMode_Linear);
+    HyTexture* asciiTexture = hy_texture_create("assets/textures/FiraCode-SemiBold.png", HyTextureFilterMode_Linear);
     HyTexture* folderTexture = hy_texture_create("assets/icons/folder.png", HyTextureFilterMode_Linear);
     
     // TODO(alex): Move into renderer init struct
@@ -228,7 +230,7 @@ int main(int argc, char* argv[])
             local_persist float cpuLoad = 0.0f;
             local_persist float currCpuLoad = 0.0f;
             
-            cpuLoad = (float)GetCPULoad();
+            cpuLoad = (float)hy_get_cpu_load();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             // Caption
@@ -257,31 +259,6 @@ int main(int argc, char* argv[])
             draw_debug_text(drawInfo, 12.0f, window.height - 208.0f, hex_to_HyColor(fg));
             draw_debug_text(cpuInfo, 12.0f, window.height - 258.0f, hex_to_HyColor(fg));
 #endif
-            
-            hui_begin_row(); // App
-            {
-                hui_begin_row(); // App bar
-                {
-                    
-                }
-                hui_end_row();
-                hui_begin_row(); // Content
-                {
-                    hui_begin_col(); // Activity Col
-                    hui_end_col();
-                    hui_begin_col(); // Explorer Col
-                    hui_end_col();
-                    hui_begin_col(); // Documents Col
-                    hui_end_col();
-                }
-                hui_end_row();
-                hui_begin_row(); // Status bar
-                {
-                    
-                }
-                hui_end_row();
-            }
-            hui_end_row();
         }
         hy_renderer2d_end_scene();
         

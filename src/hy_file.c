@@ -1,3 +1,5 @@
+
+/// Platform indipendent file.
 typedef struct {
     char* data;
     u32   size;

@@ -14,10 +14,51 @@ extern IMAGE_DOS_HEADER __ImageBase;
 #endif
 
 //~
-/// Metrics
+/// Time.
 ///
 
-internal float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
+global_variable double g_TimerStart = 0.0f;
+global_variable double g_TimerFrequency = 0.0f;
+
+/// Initializes the timer.
+internal void hy_timer_init()
+{
+    if (g_TimerFrequency == 0.0f) {
+        QueryPerformanceFrequency((LARGE_INTEGER*)&g_TimerFrequency);
+    }
+    
+    QueryPerformanceCounter((LARGE_INTEGER*)&g_TimerStart);
+}
+
+/// Starts the timer.
+internal void hy_timer_reset()
+{
+    QueryPerformanceCounter((LARGE_INTEGER*)&g_TimerStart);
+}
+
+/// Returns elapsed microseconds since timer start.
+internal double hy_timer_get_microseconds()
+{
+    double counter;
+    QueryPerformanceCounter((LARGE_INTEGER*)&counter);
+    counter = (counter - g_TimerStart) / g_TimerFrequency;
+    return counter;
+}
+
+/// Returns elapsed milliseconds since timer start.
+internal double hy_timer_get_milliseconds()
+{
+    double counter;
+    QueryPerformanceCounter((LARGE_INTEGER*)&counter);
+    float ms = (float)(1000.0f * (counter - g_TimerStart) / g_TimerFrequency);
+    return ms;
+}
+
+//~
+// Metrics
+//
+
+internal float hy_calc_cpu_load(unsigned long long idleTicks, unsigned long long totalTicks)
 {
     local_persist unsigned long long _previousTotalTicks = 0;
     local_persist unsigned long long _previousIdleTicks = 0;
@@ -32,7 +73,7 @@ internal float CalculateCPULoad(unsigned long long idleTicks, unsigned long long
     return ret;
 }
 
-internal unsigned long long FileTimeToInt64(FILETIME ft)
+internal unsigned long long hy_file_time_to_int64(FILETIME ft)
 {
     return (((unsigned long long)(ft.dwHighDateTime)) << 32) | ((unsigned long long)ft.dwLowDateTime);
 }
@@ -40,17 +81,17 @@ internal unsigned long long FileTimeToInt64(FILETIME ft)
 // Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in
 // between You'll need to call this at regular intervals, since it measures the
 // load between the previous call and the current one.  Returns -1.0 on error.
-internal float GetCPULoad()
+internal float hy_get_cpu_load()
 {
     FILETIME idleTime, kernelTime, userTime;
     return GetSystemTimes(&idleTime, &kernelTime, &userTime)
-        ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime))
+        ? hy_calc_cpu_load(hy_file_time_to_int64(idleTime), hy_file_time_to_int64(kernelTime) + hy_file_time_to_int64(userTime))
         : -1.0f;
 }
 
 //~
-/// Memory
-///
+// Memory
+//
 
 internal void* _hy_malloc(size_t nbytes, char* funcName)
 {
@@ -77,8 +118,8 @@ internal void _hy_free(void* p, char* funcName)
 }
 
 //~
-/// Window.
-///
+// Window.
+//
 
 // TODO(alex): When resizing with titlebar from maximized there is a little border visible till you release the mouse button.
 // TODO(alex): Implement drawing while resizing or at least not recreate the framebuffer untile resizing is done.
@@ -90,7 +131,7 @@ typedef struct HyWindow HyWindow;
 
 typedef void (*window_size_callback_t)(HyWindow*, unsigned int, unsigned int);
 
-/// @brief Represents a platform-indipendent window.
+/// Platform indipendent window.
 struct HyWindow {
     bool theme_enabled;
 	bool composition_enabled;
@@ -551,7 +592,7 @@ internal b32 hy_window_should_close(HyWindow* window)
 ///
 
 ///
-/// @warn Should be called BEFORE HY_CreateWindow();
+/// Should be called BEFORE HY_CreateWindow();
 ///
 internal void hy_set_window_size_callback(HyWindow* hyWindow, window_size_callback_t callback)
 {
