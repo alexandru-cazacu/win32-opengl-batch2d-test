@@ -72,6 +72,9 @@
 #include <dwmapi.h>
 #include <versionhelpers.h>
 
+#define HY_EDITOR_CAPTION_W 46
+#define HY_EDITOR_CAPTION_H 30
+
 #include "hy_types.c"
 #include "hy_assert.c"
 #include "hy_log.c"
@@ -228,14 +231,15 @@ int main(int argc, char* argv[])
             cpuLoad = (float)GetCPULoad();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
-            draw_quad_2c((vec2){0.0f, (float)window.height - 50.0f}, (vec2){window.width, 50.0f}, hex_to_HyColor(fg));
+            // Caption
+            draw_quad_2c((vec2){0.0f, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(fg));
             
-            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - 50, hex_to_HyColor(fg));
+            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
-            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - 50, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
+            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
             
-            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - 50, hex_to_HyColor(fg));
-            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - 50, hex_to_HyColor(fg));
+            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
+            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
 #if 0
             // Debug info

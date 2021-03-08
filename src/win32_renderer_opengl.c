@@ -1195,6 +1195,7 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
     float charWidth = 16.0f;
     float charPad = -(charWidth / 3.0f);
     float lineHeight = 24.0f;
+    HyColor currColor = color;
     
     char c = string[0];
     int  i = 0;
@@ -1204,11 +1205,18 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
             y -= lineHeight;
             c = string[++i];
             xOffset = 0;
+            currColor = color;
             continue;
         }
         if (c == '\r') {
             c = string[++i];
             continue;
+        }
+        if (c == '/') {
+            currColor = hex_to_HyColor(gray);
+        }
+        if (c == '#') {
+            currColor = hex_to_HyColor(purple1);
         }
         
         c -= (char)firstCharIndex;
@@ -1222,7 +1230,7 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
         
         draw_quad_3tcc((vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f},
                        (vec2){charWidth, charWidth},
-                       renderer->asciiTexture, color,
+                       renderer->asciiTexture, currColor,
                        cx, cy, cw, ch);
         
         c = string[++i];

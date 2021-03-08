@@ -327,6 +327,9 @@ internal LRESULT win32_handle_nchittest(HyWindow *data, int x, int y)
 			return HTTOPLEFT;
 		if (mouse.x >= data->width - diagonal_width)
 			return HTTOPRIGHT;
+        if (win32_is_maximized(data->window)) {
+            return HTCAPTION;
+        }
 		return HTTOP;
 	}
     
