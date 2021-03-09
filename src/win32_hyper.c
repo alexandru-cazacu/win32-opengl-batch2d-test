@@ -74,6 +74,7 @@
 
 #define HY_EDITOR_CAPTION_W 46
 #define HY_EDITOR_CAPTION_H 30
+#define HY_EDITOR_STATUS_H 20
 
 #include "hy_types.c"
 #include "hy_assert.c"
@@ -158,11 +159,6 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
     GL_CALL(glViewport(0, 0, width, height));
-    HyColor hcbg = hex_to_HyColor(bg);
-    HY_SetClearColorCmd(&hcbg);
-    HY_ClearCmd();
-    draw_debug_text("Resizing, you may want to keep drawing....", 20.0f, (float)height - 300, hex_to_HyColor(fg));
-    hy_swap_buffers(hyWindow);
 }
 
 // Subsystem:console
@@ -201,32 +197,32 @@ int main(int argc, char* argv[])
     
     HyTexture* testTexture = hy_texture_create("assets/textures/container.png", HyTextureFilterMode_Linear);
     HyTexture* testTexture1 = hy_texture_create("assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-    //HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
-    //HyTexture* asciiTexture = hy_texture_create("assets/textures/FiraCode-Medium.png", HyTextureFilterMode_Linear);
-    HyTexture* asciiTexture = hy_texture_create("assets/textures/FiraCode-SemiBold.png", HyTextureFilterMode_Linear);
-    HyTexture* folderTexture = hy_texture_create("assets/icons/folder.png", HyTextureFilterMode_Linear);
+    HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
+    HyTexture* folderTexture = hy_texture_create("assets/icons/git.png", HyTextureFilterMode_Linear);
     
     // TODO(alex): Move into renderer init struct
     g_renderer.asciiTexture = asciiTexture;
     
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
     float lastTime = 0.0f;
+    
+    GL_CALL(glEnable(GL_CULL_FACE));
+    GL_CALL(glEnable(GL_BLEND));
+    //GL_CALL(glEnable(GL_DEPTH_TEST));
+    GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     
     while (!hy_window_should_close(&window)) {
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
+        
+        HyColor hcbg = hex_to_HyColor(bg0);
+        HY_SetClearColorCmd(&hcbg);
+        HY_ClearCmd();
         
         HyRenderer2DStats stats = hy_renderer2d_get_stats();
         
         hy_renderer2d_reset_stats();
         hy_renderer2d_begin_scene(&camera2D);
         {
-            HyColor hcbg = hex_to_HyColor(bg);
-            HY_SetClearColorCmd(&hcbg);
-            HY_ClearCmd();
-            
             local_persist float cpuLoad = 0.0f;
             local_persist float currCpuLoad = 0.0f;
             
@@ -234,15 +230,29 @@ int main(int argc, char* argv[])
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             // Caption
-            draw_quad_2c((vec2){0.0f, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(fg));
+            draw_quad_2c((vec2){0.0f, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg1));
+            draw_quad_2tc(12.0f, (float)window.height - HY_EDITOR_CAPTION_H + 2, (vec2){ 24, 24 }, folderTexture, hex_to_HyColor(fg));
+            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(red1));
+            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W * 2, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0));
+            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W * 3, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0));
+            draw_debug_text("Hyper", 500.0f, (float)window.height - HY_EDITOR_CAPTION_H+ 4, hex_to_HyColor(fg));
             
+            // Text content
             draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
+            // Folder icon
             draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
             
+            // Project tree
             draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
+            // Status bar
+            draw_quad_2c((vec2){0.0f, 0.0f}, (vec2){window.width, HY_EDITOR_STATUS_H}, hex_to_HyColor(bg1));
+            draw_quad_2tc(12.0f, 2, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
+            draw_debug_text("master", 30.0f, 2.0f, hex_to_HyColor(fg));
+            draw_debug_text("0", 150.0f, 2.0f, hex_to_HyColor(fg));
+            draw_debug_text("0", 190.0f, 2.0f, hex_to_HyColor(fg));
 #if 0
             // Debug info
             char glInfo[256] = {0};
@@ -268,7 +278,7 @@ int main(int argc, char* argv[])
         
         lastTime = currTime;
         
-        Sleep(10);
+        Sleep(1);
     }
     
     hy_window_destroy(&window);

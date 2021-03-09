@@ -9,6 +9,7 @@ out vec4 v_VertexColor;
 out vec2 v_TexCoord;
 out float v_TexIndex;
 
+uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 
@@ -17,5 +18,5 @@ void main()
     v_VertexColor = a_Color;
     v_TexCoord = a_TexCoord;
     v_TexIndex = a_TexIndex;
-    gl_Position = u_Projection * u_View * vec4(a_Pos, 1.0);
+    gl_Position = u_Projection * u_View * u_Model * vec4(a_Pos, 1.0);
 };

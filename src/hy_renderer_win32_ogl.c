@@ -1,6 +1,6 @@
 //~
-/// OpenGL Error handling
-///
+// OpenGL Error handling
+//
 
 internal void hy_gl_clear_error()
 {
@@ -37,8 +37,8 @@ hy_gl_clear_error();                                                            
 x;                                                                                                                   \
 ASSERT(hy_gl_log_call(#x, __FILE__, __LINE__))
 
-internal void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length,
-                                     const char* message, const void* userParam)
+internal void APIENTRY hy_gl_debug_output(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length,
+                                          const char* message, const void* userParam)
 {
     // ignore non-significant error/warning codes
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204) {
@@ -254,7 +254,8 @@ internal void HyFramebuffer_Unbind()
 /// Colors
 ///
 
-uint32_t bg = 0x282828FF;
+uint32_t bg0 = 0x282828FF;
+uint32_t bg1 = 0x3C3836FF;
 uint32_t gray = 0x928374FF;
 uint32_t red0 = 0xCC241dFF;
 uint32_t red1 = 0xFB4939FF;
@@ -743,7 +744,7 @@ internal void HY_Shader_SetFloat(HyShader* shader, const char* name, float value
     GL_CALL(glUniform1f(loc, value));
 }
 
-internal void HY_Shader_SetMat4(HyShader* shader, const char* name, const mat4* value)
+internal void HY_Shader_SetMat4(HyShader* shader, char* name, mat4 value)
 {
     int loc = HY_Shader_GetUniformLocation(shader, name);
     
@@ -752,26 +753,54 @@ internal void HY_Shader_SetMat4(HyShader* shader, const char* name, const mat4* 
     }
 }
 
-#if 0
-internal void HyCamera_UpdateVectors(HyCamera* camera, float aspectRatio)
+internal void hy_camera_update_vectors(HyCamera* camera, float aspectRatio)
 {
     // Calculate the new Front vector
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
-    direction.y = sin(glm::radians(camera.rotation.x));
-    direction.z = sin(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
-    camera.front = glm::normalize(direction);
+    vec3 direction;
+    direction[0] = cos(glm_rad(camera->rotation[1])) * cos(glm_rad(camera->rotation[0]));
+    direction[1] = sin(glm_rad(camera->rotation[0]));
+    direction[2] = sin(glm_rad(camera->rotation[1])) * cos(glm_rad(camera->rotation[0]));
+    glm_vec3_normalize_to(direction, camera->front);
     
     // Also re-calculate the Right and Up vector
     // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    camera.right = glm::normalize(glm::cross(camera.front, camera.worldUp));
-    camera.up = glm::normalize(glm::cross(camera.right, camera.front));
+    vec3 fuCross;
+    glm_cross(camera->front, camera->worldUp, fuCross);
+    glm_normalize_to(fuCross, camera->right);
+    vec3 rfCross;
+    glm_cross(camera->right, camera->front, rfCross);
+    glm_normalize_to(rfCross, camera->up);
     
-    camera.viewMatrix = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
+    vec3 front;
+    glm_vec3_add(camera->position, camera->front, front);
+    glm_lookat(camera->position, front, camera->up, camera->viewMatrix);
     
-    camera.projectionMatrix = glm::perspective(glm::radians(camera.fov), aspectRatio, camera.nearPlane, camera.farPlane);
-}
+    glm_perspective(glm_rad(camera->fov), aspectRatio, camera->nearPlane, camera->farPlane, camera->projectionMatrix);
+    
+#if 0
+    // Calculate the new Front vector
+    vec3 direction;
+    direction[0] = cos(camera->rotation[1]) * cos(camera->rotation[0]);
+    direction[1] = sin(camera->rotation[0]);
+    direction[2] = sin(camera->rotation[1]) * cos(camera->rotation[0]);
+    glm_vec3_normalize_to(direction, camera->front);
+    
+    // Also re-calculate the Right and Up vector
+    // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    vec3 fuCross;
+    glm_cross(camera->front, camera->worldUp, fuCross);
+    glm_normalize_to(fuCross, camera->right);
+    vec3 rfCross;
+    glm_cross(camera->right, camera->front, rfCross);
+    glm_normalize_to(rfCross, camera->up);
+    
+    vec3 front;
+    glm_vec3_add(camera->position, camera->front, front);
+    glm_lookat(camera->position, front, camera->up, camera->viewMatrix);
+    
+    glm_perspective(glm_rad(camera->fov), aspectRatio, camera->nearPlane, camera->farPlane, camera->projectionMatrix);
 #endif
+}
 
 //~ Renderer2D
 
@@ -831,7 +860,7 @@ typedef struct {
     uint32_t maxQuadCount;
     uint32_t maxVertexCount;
     uint32_t maxIndexCount;
-    uint32_t maxTextures;
+    int32_t maxTextures;
     
     uint32_t vao;
     uint32_t vbo;
@@ -882,15 +911,16 @@ internal void hy_renderer2d_init()
     HY_ASSERT(!renderer->quadVertexBufferBase, "Called hy_renderer2d_Init more than once.");
     
     // TODO(alex): Check if error callback is supported
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(glDebugOutput, NULL);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    GL_CALL(glEnable(GL_DEBUG_OUTPUT));
+    GL_CALL(glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS));
+    GL_CALL(glDebugMessageCallback(hy_gl_debug_output, NULL));
+    GL_CALL(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE));
     
-    renderer->maxQuadCount = 10000; // Actaully it crashes
+    
+    renderer->maxQuadCount = 10000;
     renderer->maxVertexCount = renderer->maxQuadCount * 4;
     renderer->maxIndexCount = renderer->maxQuadCount * 6;
-    renderer->maxTextures = 32; // TODO Query driver for max texture slots
+    GL_CALL(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &renderer->maxTextures));
     
     renderer->quadVertexBufferBase = (HyQuadVertex*)hy_malloc(sizeof(HyQuadVertex) * renderer->maxVertexCount);
     
@@ -905,20 +935,17 @@ internal void hy_renderer2d_init()
     GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, Pos))));
     GL_CALL(glEnableVertexAttribArray(0));
     // Color
-    GL_CALL(
-            glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, Color))));
+    GL_CALL(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, Color))));
     GL_CALL(glEnableVertexAttribArray(1));
     // Tex coords
-    GL_CALL(
-            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, TexCoord))));
+    GL_CALL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, TexCoord))));
     GL_CALL(glEnableVertexAttribArray(2));
     // Tex index
-    GL_CALL(
-            glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, TexIndex))));
+    GL_CALL(glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(HyQuadVertex), (void*)(offsetof(HyQuadVertex, TexIndex))));
     GL_CALL(glEnableVertexAttribArray(3));
     
     uint32_t* indices = (uint32_t*)hy_malloc(sizeof(uint32_t) * renderer->maxIndexCount);
-    uint32_t  offset = 0;
+    uint32_t offset = 0;
     
     for (uint32_t i = 0; i < renderer->maxIndexCount; i += 6) {
         indices[i + 0] = 0 + offset;
@@ -982,15 +1009,18 @@ internal void hy_renderer2d_begin_scene(HyCamera2D* camera)
     }
     
     HY_Shader_Bind(renderer->textureShader);
-    HY_Shader_SetMat4(renderer->textureShader, "u_View", &renderer->camera->viewMatrix);
-    HY_Shader_SetMat4(renderer->textureShader, "u_Projection", &renderer->camera->projectionMatrix);
+    mat4 model;
+    glm_mat4_identity(model);
+    HY_Shader_SetMat4(renderer->textureShader, "u_Model", model);
+    HY_Shader_SetMat4(renderer->textureShader, "u_View", renderer->camera->viewMatrix);
+    HY_Shader_SetMat4(renderer->textureShader, "u_Projection", renderer->camera->projectionMatrix);
     
     renderer->quadIndexCount = 0;
     renderer->quadVertexBufferPtr = renderer->quadVertexBufferBase;
     renderer->textureSlotIndex = 1;
     
     int loc = glGetUniformLocation(renderer->textureShader->id, "u_Textures");
-    int samplers[32];
+    int samplers[32]; // TODO(alex): Query max samplers.
     for (int i = 0; i < 32; ++i) {
         samplers[i] = i; // TODO(alex): zero?
     }
@@ -1017,8 +1047,8 @@ internal void hy_renderer2d_flush()
     
     for (uint32_t i = 0; i < renderer->textureSlotIndex; ++i) {
         GL_CALL(glBindTextureUnit(i, renderer->textureSlots[i]));
-        // GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
-        // GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->textureSlots[i]));
+        //GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
+        //GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->textureSlots[i]));
         // TODO(alex): What is the difference between the separate calls and the
         // single one?
     }

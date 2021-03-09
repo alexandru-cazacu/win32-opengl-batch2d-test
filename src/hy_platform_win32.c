@@ -659,7 +659,7 @@ internal int hy_window_create_borderless(HyWindow* hyWindow, HyWindowStartMode s
     
     hyWindow->window = CreateWindowExW(WS_EX_APPWINDOW | WS_EX_LAYERED,
                                        (LPWSTR)MAKEINTATOM(cls),
-                                       L"HyperWindowClass",
+                                       L"Hyper",
                                        WS_OVERLAPPEDWINDOW | WS_SIZEBOX,        // style
                                        CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, // x, y, w, h
                                        //CW_USEDEFAULT, CW_USEDEFAULT, 2560, 1440, // x, y, w, h
