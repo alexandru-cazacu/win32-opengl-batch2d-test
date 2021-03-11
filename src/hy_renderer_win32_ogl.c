@@ -1222,6 +1222,62 @@ internal void draw_quad_2c(vec2 pos, vec2 size, HyColor color)
     draw_quad_3c(tempPos, size, color);
 }
 
+typedef struct
+{
+    uint32_t unicode;
+    float advance;
+    struct plane {
+        float left, bottom, right, top;
+    } plane;
+    struct atlas {
+        float left, bottom, right, top;
+    } atlas;
+} HyGliph;
+
+internal void draw_text(HyGliph* gliphs, const char* string, float xPos, float yPos, HyColor color)
+{
+    HyRenderer2D* renderer = &g_renderer;
+    
+    float size = 64.09375f;
+    float lineHeight = 1.14990234375f;
+    float atlasSize = 124.0f;
+    
+    char c = string[0];
+    int  i = 0;
+    int  xOffset = 0;
+    while (c != '\0') {
+        if (c == '\n') {
+            yPos -= lineHeight * size;
+            c = string[++i];
+            xOffset = xPos;
+            continue;
+        }
+        if (c == '\r') {
+            c = string[++i];
+            continue;
+        }
+        
+        float w = (gliphs[c].plane.right - gliphs[c].plane.left) * size;
+        float h = (gliphs[c].plane.top - gliphs[c].plane.bottom) * size;
+        
+        float cx = gliphs[c].atlas.left / atlasSize;
+        float cy = gliphs[c].atlas.bottom / atlasSize;
+        float cw = (gliphs[c].atlas.right - gliphs[c].atlas.left) / atlasSize;
+        float ch = (gliphs[c].atlas.top - gliphs[c].atlas.bottom) / atlasSize;
+        
+        float x = xOffset + (gliphs[c].plane.left * size);
+        float y = yPos + (gliphs[c].plane.bottom * size);
+        
+        draw_quad_3tcc((vec3){x, y, 0.0f},
+                       (vec2){w, h},
+                       renderer->asciiTexture, color,
+                       cx, cy, cw, ch);
+        
+        xOffset += (gliphs[c].advance * size);
+        c = string[++i];
+    }
+}
+
 internal void draw_debug_text(const char* string, float x, float y, HyColor color)
 {
     HyRenderer2D* renderer = &g_renderer;
