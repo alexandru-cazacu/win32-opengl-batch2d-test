@@ -277,7 +277,7 @@ int hy_main(int argc, char* argv[])
                           closeIcon, hex_to_HyColor(fg));
             
             // Status bar
-            vec2 p = { 10.0f, (HY_EDITOR_STATUS_H - FONT_SIZE) / 2.0f };
+            vec2 p = { 10.0f, (HY_EDITOR_STATUS_H - FONT_SIZE) / 2.0f - 2.0f };
             draw_quad_2c((vec2){0.0f, 0.0f}, (vec2){window.width, HY_EDITOR_STATUS_H}, hex_to_HyColor(bg0_s));
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, gitIcon, HyWhite);
             p[0] += FONT_SIZE;
@@ -288,20 +288,20 @@ int hy_main(int argc, char* argv[])
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, downloadIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
             draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
-            p[0] += FONT_SIZE;
+            p[0] += FONT_SIZE * 1.5f;
             
             // Push
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, uploadIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
             draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
-            p[0] += FONT_SIZE;
+            p[0] += FONT_SIZE * 1.5f;
             
             // Edits
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, editIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
             draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
-            p[0] += FONT_SIZE;
-#if 0
+            p[0] += FONT_SIZE * 1.5f;
+            
             // Debug info
             char glInfo[256] = {0};
             char drawInfo[256] = {0};
@@ -310,8 +310,14 @@ int hy_main(int argc, char* argv[])
                      "Vendor         : %s\nRenderer       : %s\nOpenGL version : "
                      "%s\nGLSL version   : %s",
                      window.glVendor, window.glRenderer, window.glVersion, window.glGLSL);
-            snprintf(drawInfo, 256, "Renderer Draws: %d Quads: %d", stats.drawCount, stats.quadCount);
-            snprintf(cpuInfo, 256, "CPU Load: %f\nFrame Time: %f", currCpuLoad, dt);
+            snprintf(drawInfo, 256, "Draws: %d | Quads: %d", stats.drawCount, stats.quadCount);
+            snprintf(cpuInfo, 256, "CPU Load: %2.0f | Frame Time: %3.1f", currCpuLoad * 100.0f, dt);
+            
+            draw_debug_text(drawInfo, p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE * 20.0f;
+            draw_debug_text(cpuInfo, p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE * 1.5f;
+#if 0
             draw_quad_2c((vec2){0.0f, (float)window.height - 300.0f}, (vec2){600.0f, 300.0f}, hex_to_HyColor(bg));
             draw_debug_text(glInfo, 12.0f, window.height - 28.0f, hex_to_HyColor(fg));
             draw_debug_text(drawInfo, 12.0f, window.height - 208.0f, hex_to_HyColor(fg));
