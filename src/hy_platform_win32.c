@@ -728,3 +728,37 @@ internal void hy_window_destroy(HyWindow* hyWindow)
     fglDestroyOpenGLContext(&hyWindow->glContext);
     fglUnloadOpenGL();
 }
+
+internal int hy_main(int argc, char* argv[]);
+
+// Subsystem:console
+int main(int argc, char* argv[]) {
+    hy_main(argc, argv);
+}
+
+// Subsystem:windows
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+{
+    // Read cmd args.
+    LPWSTR* argv;
+    int     argc;
+    int     i;
+    
+    // argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    argv = CommandLineToArgvW(pCmdLine, &argc);
+    if (NULL == argv) {
+        HY_INFO("CommandLineToArgvW failed\n");
+        return 0;
+    } else {
+        for (i = 0; i < argc; i++) {
+            HY_INFO("%d: %ws\n", i, argv[i]);
+        }
+    }
+    
+    // TODO(alex): How tf do u use windows types?
+    int result = hy_main(argc, NULL);
+    
+    LocalFree(argv); // Free memory allocated for CommandLineToArgvW arguments.
+    
+    ExitProcess(result);
+}

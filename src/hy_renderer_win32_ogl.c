@@ -83,6 +83,15 @@ internal void APIENTRY hy_gl_debug_output(GLenum source, GLenum type, unsigned i
              id, message, sourceMessage, typeMessage, severityMessage);
 }
 
+//~
+// Vectors
+//
+
+typedef struct { float x, y; } V2;
+typedef struct { float x, y, z; } V3;
+typedef struct { float x, y, z, w; } V4;
+
+
 //~ Textures
 
 typedef struct {
@@ -254,8 +263,18 @@ internal void HyFramebuffer_Unbind()
 /// Colors
 ///
 
+/// RGBA float colors.
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} HyColor;
+
+uint32_t white = 0xFFFFFFFF;
 uint32_t bg0 = 0x282828FF;
 uint32_t bg1 = 0x3C3836FF;
+uint32_t bg0_s = 0x32302FFF;
 uint32_t gray = 0x928374FF;
 uint32_t red0 = 0xCC241dFF;
 uint32_t red1 = 0xFB4939FF;
@@ -268,8 +287,8 @@ uint32_t aqua1 = 0x8EC07CFF;
 uint32_t fg = 0xebdbb2ff;
 
 // TODO(alex): Remove?
+internal HyColor HyWhite = { 1.0f, 1.0f, 1.0f, 1.0f };
 #if 0
-internal float HyColor_White[] = {1.0f, 1.0f, 1.0f, 1.0f};
 internal float HyColor_Grey2[] = {0.2f, 0.2f, 0.2f, 1.0f};
 internal float HyColor_Grey1[] = {0.1f, 0.1f, 0.1f, 1.0f};
 internal float HyColor_Grey05[] = {0.05f, 0.05f, 0.05f, 1.0f};
@@ -281,14 +300,6 @@ internal float HyColor_Blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
 internal float HyColor_Magenta[] = {1.0f, 0.0f, 1.0f, 1.0f};
 internal float HyColor_Transparent[] = {0.0f, 0.0f, 0.0f, 0.0f};
 #endif
-
-/// RGBA float colors.
-typedef struct {
-    float r;
-    float g;
-    float b;
-    float a;
-} HyColor;
 
 internal HyColor hex_to_HyColor(uint32_t val)
 {
@@ -1058,7 +1069,7 @@ internal void hy_renderer2d_flush()
     renderer->stats.drawCount++;
 }
 
-internal void draw_quad_3tcc(vec3 pos, vec2 size, HyTexture* hyTexture, HyColor color, float tx,
+internal void draw_quad_3tcc(vec3 pos, float width, float height, HyTexture* hyTexture, HyColor color, float tx,
                              float ty, float tw, float th)
 {
     HyRenderer2D* renderer = &g_renderer;
@@ -1093,19 +1104,19 @@ internal void draw_quad_3tcc(vec3 pos, vec2 size, HyTexture* hyTexture, HyColor 
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    glm_vec3_copy((vec3){pos[0] + size[0], pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
+    glm_vec3_copy((vec3){pos[0] + width, pos[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
     glm_vec2_copy((vec2){tx + tw, ty}, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    glm_vec3_copy((vec3){pos[0] + size[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
+    glm_vec3_copy((vec3){pos[0] + width, pos[1] + height, pos[2]}, renderer->quadVertexBufferPtr->Pos);
     glm_vec2_copy((vec2){tx + tw, ty + th}, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
     renderer->quadVertexBufferPtr++;
     
-    glm_vec3_copy((vec3){pos[0], pos[1] + size[1], pos[2]}, renderer->quadVertexBufferPtr->Pos);
+    glm_vec3_copy((vec3){pos[0], pos[1] + height, pos[2]}, renderer->quadVertexBufferPtr->Pos);
     glm_vec2_copy((vec2){tx, ty + th}, renderer->quadVertexBufferPtr->TexCoord);
     renderer->quadVertexBufferPtr->Color = color;
     renderer->quadVertexBufferPtr->TexIndex = textureIndex;
@@ -1222,6 +1233,9 @@ internal void draw_quad_2c(vec2 pos, vec2 size, HyColor color)
     draw_quad_3c(tempPos, size, color);
 }
 
+// TODO(alex): Clearly not a define, fine for debugging purposes
+#define FONT_SIZE 18.0f
+
 internal void draw_debug_text(const char* string, float x, float y, HyColor color)
 {
     HyRenderer2D* renderer = &g_renderer;
@@ -1229,9 +1243,9 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
     int   cellsPerRow = 10;
     int   cellsPerCol = 10;
     int   firstCharIndex = 31;
-    float charWidth = 16.0f;
-    float charPad = -(charWidth / 3.0f);
-    float lineHeight = 24.0f;
+    float charWidth = FONT_SIZE;
+    float charPad = -charWidth / 2.0f;
+    float lineHeight = charWidth;
     HyColor currColor = color;
     
     char c = string[0];
@@ -1260,13 +1274,11 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
         
         float cw = 1.0f / cellsPerRow;
         float ch = 1.0f / cellsPerCol;
-        // float row = (float)(cellsPerCol - ((c - firstCharIndex) % cellsPerRow -
-        // 1)); float cx = 1.0f / cellsPerRow;
         float cx = (float)((c % cellsPerRow) - 1) * cw;
         float cy = (cellsPerCol - (float)ceil((float)c / (float)cellsPerCol)) * ch;
         
         draw_quad_3tcc((vec3){x + (xOffset * (charWidth + charPad)), y, 0.0f},
-                       (vec2){charWidth, charWidth},
+                       charWidth, charWidth,
                        renderer->asciiTexture, currColor,
                        cx, cy, cw, ch);
         

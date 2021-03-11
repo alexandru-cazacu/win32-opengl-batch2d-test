@@ -74,7 +74,7 @@
 
 #define HY_EDITOR_CAPTION_W 46
 #define HY_EDITOR_CAPTION_H 30
-#define HY_EDITOR_STATUS_H 20
+#define HY_EDITOR_STATUS_H 22
 
 #include "hy_types.c"
 #include "hy_assert.c"
@@ -161,8 +161,7 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     GL_CALL(glViewport(0, 0, width, height));
 }
 
-// Subsystem:console
-int main(int argc, char* argv[])
+int hy_main(int argc, char* argv[])
 {
     hy_log_init();
     hy_timer_init();
@@ -195,10 +194,19 @@ int main(int argc, char* argv[])
     
     hy_renderer2d_init();
     
-    HyTexture* testTexture = hy_texture_create("assets/textures/container.png", HyTextureFilterMode_Linear);
-    HyTexture* testTexture1 = hy_texture_create("assets/textures/container_specular.png", HyTextureFilterMode_Linear);
-    HyTexture* asciiTexture = hy_texture_create("assets/textures/DejaVu Sans Mono.png", HyTextureFilterMode_Linear);
-    HyTexture* folderTexture = hy_texture_create("assets/icons/git.png", HyTextureFilterMode_Linear);
+    HyTexture* asciiTexture = hy_texture_create("assets/textures/Fira Code-9(18).png", HyTextureFilterMode_Linear);
+    
+    HyTexture* hyperIcon = hy_texture_create("assets/icons/hyper-logo-24.png", HyTextureFilterMode_Linear);
+    
+    HyTexture* gitIcon = hy_texture_create("assets/icons/git.png", HyTextureFilterMode_Linear);
+    HyTexture* uploadIcon = hy_texture_create("assets/icons/upload.png", HyTextureFilterMode_Linear);
+    HyTexture* downloadIcon = hy_texture_create("assets/icons/download.png", HyTextureFilterMode_Linear);
+    HyTexture* editIcon = hy_texture_create("assets/icons/edit.png", HyTextureFilterMode_Linear);
+    
+    HyTexture* closeIcon = hy_texture_create("assets/icons/chrome-close.png", HyTextureFilterMode_Linear);
+    HyTexture* restoreIcon = hy_texture_create("assets/icons/chrome-restore.png", HyTextureFilterMode_Linear);
+    HyTexture* minimizeIcon = hy_texture_create("assets/icons/chrome-minimize.png", HyTextureFilterMode_Linear);
+    HyTexture* maximizeIcon = hy_texture_create("assets/icons/chrome-maximize.png", HyTextureFilterMode_Linear);
     
     // TODO(alex): Move into renderer init struct
     g_renderer.asciiTexture = asciiTexture;
@@ -214,7 +222,7 @@ int main(int argc, char* argv[])
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
         
-        HyColor hcbg = hex_to_HyColor(bg0);
+        HyColor hcbg = hex_to_HyColor(bg0_s);
         HY_SetClearColorCmd(&hcbg);
         HY_ClearCmd();
         
@@ -229,30 +237,70 @@ int main(int argc, char* argv[])
             cpuLoad = (float)hy_get_cpu_load();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
-            // Caption
-            draw_quad_2c((vec2){0.0f, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg1));
-            draw_quad_2tc(12.0f, (float)window.height - HY_EDITOR_CAPTION_H + 2, (vec2){ 24, 24 }, folderTexture, hex_to_HyColor(fg));
-            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(red1));
-            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W * 2, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0));
-            draw_quad_2c((vec2){window.width - HY_EDITOR_CAPTION_W * 3, (float)window.height - HY_EDITOR_CAPTION_H}, (vec2){HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0));
-            draw_debug_text("Hyper", 500.0f, (float)window.height - HY_EDITOR_CAPTION_H+ 4, hex_to_HyColor(fg));
-            
             // Text content
-            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
+            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H + 210, hex_to_HyColor(fg));
             
             // Folder icon
-            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
+            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, gitIcon, HyWhite);
             
             // Project tree
             draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
+            // Caption
+            draw_quad_2c((vec3){ 0.0f, (float)window.height - HY_EDITOR_CAPTION_H }, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0_s));
+            draw_quad_2tc(10.0f, (float)window.height - HY_EDITOR_CAPTION_H + 5, (vec2){ 20, 20 }, hyperIcon, HyWhite);
+            draw_debug_text("Hyper", 34.0f, (float)window.height - HY_EDITOR_CAPTION_H + ((HY_EDITOR_CAPTION_H - FONT_SIZE) / 2.0f), hex_to_HyColor(fg));
+            
+            // Minimize button
+            draw_quad_2c((vec2){ window.width - HY_EDITOR_CAPTION_W * 3, (float)window.height - HY_EDITOR_CAPTION_H },
+                         (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                         hex_to_HyColor(bg0_s));
+            draw_quad_2tc(window.width - HY_EDITOR_CAPTION_W * 3, (float)window.height - HY_EDITOR_CAPTION_H,
+                          (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                          minimizeIcon, hex_to_HyColor(fg));
+            
+            // Maximize button
+            draw_quad_2c((vec2){ window.width - HY_EDITOR_CAPTION_W * 2, (float)window.height - HY_EDITOR_CAPTION_H },
+                         (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                         hex_to_HyColor(bg0_s));
+            draw_quad_2tc(window.width - HY_EDITOR_CAPTION_W * 2, (float)window.height - HY_EDITOR_CAPTION_H,
+                          (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                          maximizeIcon, hex_to_HyColor(fg));
+            
+            // Close button
+            draw_quad_2c((vec2){ window.width - HY_EDITOR_CAPTION_W, (float)window.height - HY_EDITOR_CAPTION_H },
+                         (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                         hex_to_HyColor(bg0_s));
+            draw_quad_2tc(window.width - HY_EDITOR_CAPTION_W, (float)window.height - HY_EDITOR_CAPTION_H,
+                          (vec2){ HY_EDITOR_CAPTION_W, HY_EDITOR_CAPTION_H },
+                          closeIcon, hex_to_HyColor(fg));
+            
             // Status bar
-            draw_quad_2c((vec2){0.0f, 0.0f}, (vec2){window.width, HY_EDITOR_STATUS_H}, hex_to_HyColor(bg1));
-            draw_quad_2tc(12.0f, 2, (vec2){ 16, 16 }, folderTexture, hex_to_HyColor(fg));
-            draw_debug_text("master", 30.0f, 2.0f, hex_to_HyColor(fg));
-            draw_debug_text("0", 150.0f, 2.0f, hex_to_HyColor(fg));
-            draw_debug_text("0", 190.0f, 2.0f, hex_to_HyColor(fg));
+            vec2 p = { 10.0f, (HY_EDITOR_STATUS_H - FONT_SIZE) / 2.0f };
+            draw_quad_2c((vec2){0.0f, 0.0f}, (vec2){window.width, HY_EDITOR_STATUS_H}, hex_to_HyColor(bg0_s));
+            draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, gitIcon, HyWhite);
+            p[0] += FONT_SIZE;
+            draw_debug_text("master", p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE * 4;
+            
+            // Pull
+            draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, downloadIcon, hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
+            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
+            
+            // Push
+            draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, uploadIcon, hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
+            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
+            
+            // Edits
+            draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, editIcon, hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
+            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE;
 #if 0
             // Debug info
             char glInfo[256] = {0};
@@ -283,32 +331,5 @@ int main(int argc, char* argv[])
     
     hy_window_destroy(&window);
     
-    ExitProcess(0);
-}
-
-// Subsystem:windows
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
-{
-    // Read cmd args.
-    LPWSTR* argv;
-    int     argc;
-    int     i;
-    
-    // argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    argv = CommandLineToArgvW(pCmdLine, &argc);
-    if (NULL == argv) {
-        HY_INFO("CommandLineToArgvW failed\n");
-        return 0;
-    } else {
-        for (i = 0; i < argc; i++) {
-            HY_INFO("%d: %ws\n", i, argv[i]);
-        }
-    }
-    
-    // TODO(alex): How tf do u use windows types?
-    return main(argc, NULL);
-    
-    // LocalFree(argv); // Free memory allocated for CommandLineToArgvW arguments.
-    
-    // return result;
+    return 0;
 }
