@@ -311,7 +311,7 @@ int hy_main(int argc, char* argv[])
                      "%s\nGLSL version   : %s",
                      window.glVendor, window.glRenderer, window.glVersion, window.glGLSL);
             snprintf(drawInfo, 256, "Draws: %d | Quads: %d", stats.drawCount, stats.quadCount);
-            snprintf(cpuInfo, 256, "CPU Load: %2.0f | Frame Time: %3.1f", currCpuLoad * 100.0f, dt);
+            snprintf(cpuInfo, 256, "CPU Load: %2.0f%% | Frame Time: %3.1fms", currCpuLoad * 100.0f, dt);
             
             draw_debug_text(drawInfo, p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 20.0f;

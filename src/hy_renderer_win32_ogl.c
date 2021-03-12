@@ -572,6 +572,7 @@ internal void HY_VertexArray_Destroy(HyVertexArray* vertexArray)
     // TODO(alex): Implement
 }
 
+#if 0
 internal void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVertexBuffer* vertexBuffer)
 {
     HY_ASSERT(vertexBuffer->layout.elementsIndex, "Vertex Buffer has no layout!");
@@ -594,6 +595,7 @@ internal void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVerte
     
     vertexArray->vertexBuffers[vertexArray->vertexBufferCount++] = vertexBuffer;
 }
+#endif
 
 internal void HY_VertexArray_SetIndexBuffer(HyVertexArray* vertexArray, HyIndexBuffer* indexBuffer)
 {
