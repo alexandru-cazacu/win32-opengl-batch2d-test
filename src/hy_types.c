@@ -50,6 +50,8 @@ typedef bool b32;
 if (!(x)) {                                                                                                          \
 *(int*)0 = 0;                                                                                                      \
 }
+#else
+#define HY_FASSERT(x)
 #endif
 
 inline u32 SafeTruncateU64(u64 value)

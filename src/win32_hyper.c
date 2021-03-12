@@ -82,12 +82,8 @@
 #include "hy_platform.h"
 
 #pragma warning(push)
-#pragma warning(disable : 4204) // nonstandard extension used : non-constant aggregate initializer
-#pragma warning(disable : 4996) // TODO(alex): What error
-#pragma warning(disable : 4459) // TODO(alex): What error
-#pragma warning(disable : 4244) // TODO(alex): What error
-#pragma warning(disable : 4267) // TODO(alex): What error
-#pragma warning(disable : 4456) // TODO(alex): What error
+#pragma warning(disable : 4459) // declaration of 'identifier' hides global declaration
+#pragma warning(disable : 4996) // declaration of 'identifier' hides global declaration
 
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
@@ -169,7 +165,7 @@ int hy_main(int argc, char* argv[])
     HyConfig config = {0};
     config.startMode = HyWindowStartMode_Auto;
     
-    HyFile* configFile = HY_ReadFile(".hypedrc");
+    HyFile* configFile = hy_read_file(".hypedrc");
     if (configFile) {
         ini_parse_string(configFile->data, configHandler, &config);
         HY_INFO("Config loaded from '.hypedrc'");
@@ -179,7 +175,7 @@ int hy_main(int argc, char* argv[])
         HY_ERROR(".hypedrc not found");
     }
     
-    HyFile* testFile = HY_ReadFile("src/win32_hyper.c");
+    HyFile* testFile = hy_read_file("src/win32_hyper.c");
     
     HyWindow window = {0};
     hy_window_create_borderless(&window, config.startMode, "Hyped");
@@ -238,7 +234,9 @@ int hy_main(int argc, char* argv[])
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             // Text content
-            draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H + 210, hex_to_HyColor(fg));
+            if (testFile) {
+                draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H + 210, hex_to_HyColor(fg));
+            }
             
             // Folder icon
             draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, gitIcon, HyWhite);

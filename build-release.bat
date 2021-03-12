@@ -9,14 +9,14 @@ call .\3rd\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
 set compilerFlags=^
 	-Oi -MT -O2 -GR- -EHa- -FC -nologo -std:c++17 ^
-	-W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 -wd4101 -wd4204 ^
+	-W4 -WX -wd4201 -wd4100 -wd4189 -wd4204 ^
 	-I %cd%\src ^
 	-I %cd%\3rd ^
 	-I %cd%\3rd\cglm\include ^
 	-I %cd%\resources ^
 	resources.res
 
-set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
+set linkerFlags=-WX -opt:ref -incremental:no -subsystem:windows
 set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib
 
 if not exist %buildDir% mkdir %buildDir%

@@ -572,7 +572,6 @@ internal void HY_VertexArray_Destroy(HyVertexArray* vertexArray)
     // TODO(alex): Implement
 }
 
-#if 0
 internal void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVertexBuffer* vertexBuffer)
 {
     HY_ASSERT(vertexBuffer->layout.elementsIndex, "Vertex Buffer has no layout!");
@@ -595,7 +594,6 @@ internal void HY_VertexArray_AddVertexBuffer(HyVertexArray* vertexArray, HyVerte
     
     vertexArray->vertexBuffers[vertexArray->vertexBufferCount++] = vertexBuffer;
 }
-#endif
 
 internal void HY_VertexArray_SetIndexBuffer(HyVertexArray* vertexArray, HyIndexBuffer* indexBuffer)
 {
@@ -655,8 +653,8 @@ internal void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
 internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFilePath)
 {
     // TODO(alex): May fail.
-    HyFile* vShaderCode = HY_ReadFile(vertFilePath);
-    HyFile* fShaderCode = HY_ReadFile(fragFilePath);
+    HyFile* vShaderCode = hy_read_file(vertFilePath);
+    HyFile* fShaderCode = hy_read_file(fragFilePath);
     
     HyShader* shader = hy_malloc(sizeof(HyShader));
     
@@ -688,7 +686,7 @@ internal HyShader* HY_Shader_Create(const char* vertFilePath, const char* fragFi
     GL_CALL(glDeleteShader(fragmentShaderID));
     
     // TODO(alex): Extract shader name.
-    strncpy(shader->name, vertFilePath, strlen(vertFilePath));
+    strncpy_s(shader->name, 128, vertFilePath, strlen(vertFilePath));
     
     // TODO(alex): What is this?
     for (int i = 0; i < HY_SHADER_MAP_SIZE; ++i) {

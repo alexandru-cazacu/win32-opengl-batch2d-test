@@ -9,7 +9,7 @@ call .\3rd\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
 set compilerFlags=^
     -Oi -MTd -Zi -GR- -EHa- -FC -nologo -std:c++17 ^
-    -W4 -WX -wd4201 -wd4100 -wd4189 -wd4505 -wd4101 ^
+    -W4 -WX -wd4201 -wd4100 -wd4189 ^
     -I %cd%\src ^
     -I %cd%\3rd ^
     -I %cd%\3rd\cglm\include ^
