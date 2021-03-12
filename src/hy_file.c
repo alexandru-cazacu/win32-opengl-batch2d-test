@@ -7,6 +7,7 @@ typedef struct {
 
 internal HyFile* hy_read_file(const char* fileName);
 internal b32     hy_write_file(char* fileName, u32 memorySize, void* memory);
+internal void    hy_close_file(HyFile* file);
 
 ///
 ///
@@ -60,7 +61,7 @@ internal HyFile* hy_read_file(const char* fileName)
     return result;
 }
 
-internal void HY_CloseFile(HyFile* file)
+internal void hy_close_file(HyFile* file)
 {
     if (file) {
         if (file->data) {

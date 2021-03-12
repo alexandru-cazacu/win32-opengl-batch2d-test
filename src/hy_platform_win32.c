@@ -54,6 +54,11 @@ internal double hy_timer_get_milliseconds()
     return ms;
 }
 
+internal void hy_sleep(uint8_t ms)
+{
+    Sleep(ms);
+}
+
 //~
 // Metrics
 //

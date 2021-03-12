@@ -317,11 +317,16 @@ int hy_main(int argc, char* argv[])
             p[0] += FONT_SIZE * 20.0f;
             draw_debug_text(cpuInfo, p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
+            
 #if 0
-            draw_quad_2c((vec2){0.0f, (float)window.height - 300.0f}, (vec2){600.0f, 300.0f}, hex_to_HyColor(bg));
-            draw_debug_text(glInfo, 12.0f, window.height - 28.0f, hex_to_HyColor(fg));
-            draw_debug_text(drawInfo, 12.0f, window.height - 208.0f, hex_to_HyColor(fg));
-            draw_debug_text(cpuInfo, 12.0f, window.height - 258.0f, hex_to_HyColor(fg));
+            p[0] = 0;
+            p[1] = window.height - FONT_SIZE * 2;
+            draw_quad_2c((vec2){0.0f, (float)window.height - FONT_SIZE * 8 }, (vec2){600.0f, 300.0f}, HyDebugBg);
+            draw_debug_text(glInfo, 12.0f, p[1], hex_to_HyColor(fg));
+            p[1] -= FONT_SIZE * 4;
+            draw_debug_text(drawInfo, 12.0f, p[1], hex_to_HyColor(fg));
+            p[1] -= FONT_SIZE;
+            draw_debug_text(cpuInfo, 12.0f, p[1], hex_to_HyColor(fg));
 #endif
         }
         hy_renderer2d_end_scene();
@@ -332,7 +337,7 @@ int hy_main(int argc, char* argv[])
         
         lastTime = currTime;
         
-        Sleep(1);
+        hy_sleep(1);
     }
     
     hy_texture_destroy(restoreIcon);
