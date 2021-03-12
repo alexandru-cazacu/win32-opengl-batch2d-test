@@ -62,10 +62,10 @@ internal HyFile* hy_read_file(const char* fileName)
 
 internal void HY_CloseFile(HyFile* file)
 {
-    if (file->data) {
-        hy_free(file->data);
-    }
     if (file) {
+        if (file->data) {
+            hy_free(file->data);
+        }
         hy_free(file);
     }
 }

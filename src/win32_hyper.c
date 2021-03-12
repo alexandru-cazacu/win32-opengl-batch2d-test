@@ -65,6 +65,8 @@
 #define STRICT
 #endif
 
+#pragma warning(4:4505)
+
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
@@ -332,6 +334,8 @@ int hy_main(int argc, char* argv[])
         
         Sleep(1);
     }
+    
+    hy_texture_destroy(restoreIcon);
     
     hy_window_destroy(&window);
     

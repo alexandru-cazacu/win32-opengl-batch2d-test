@@ -130,7 +130,9 @@ internal HyTexture* hy_texture_create(const char* path, HyTextureFilterMode filt
     }
     
     // load and generate the texture
-    uint32_t width, height, nrChannels = 0;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t nrChannels = 0;
     unsigned char* data = stbi_load(path, &(int)width, &(int)height, &(int)nrChannels, 0);
     if (data) {
         uint32_t glChannels = nrChannels == 4 ? GL_RGBA : GL_RGB;
@@ -448,9 +450,6 @@ internal void HY_BufferLayout_PushElement(HyBufferLayout* layout, HyBufferElemen
 
 internal HyBufferElement HY_BufferElement_Create(HyShaderDataType dataType, const char* name, BOOL normalized)
 {
-    // TODO(alex): Make normalized default to false;
-    normalized = false;
-    
     HyBufferElement bufferElement = {0};
     bufferElement.name = name;
     bufferElement.type = dataType;
