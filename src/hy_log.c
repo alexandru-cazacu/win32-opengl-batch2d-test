@@ -24,12 +24,15 @@ internal void hy_log_init()
 {
     log_set_level(LOG_INFO);
     
+    // TODO(alex): Fix
+#if 0
     if (IsDebuggerPresent()) {
         HY_INFO("Debugger present");
     } else {
         HY_INFO("Debugger not found. Fallback on stdio.");
         HY_INFO("Debugger not found. Assertion will silently crash.");
     }
+#endif
     
     HY_INFO("[Logger] Initialized.");
 }

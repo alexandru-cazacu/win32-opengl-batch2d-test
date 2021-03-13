@@ -1,3 +1,5 @@
+#include "hy_renderer.h"
+
 //~
 // OpenGL Error handling
 //
@@ -85,28 +87,23 @@ internal void APIENTRY hy_gl_debug_output(GLenum source, GLenum type, unsigned i
              id, message, sourceMessage, typeMessage, severityMessage);
 }
 
-#endif
+#else
+#define ASSERT(x)
+#define GL_CALL(x) x;
+#endif // HY_SLOW
+
 
 //~
-// Vectors
+// Textures
 //
 
-typedef struct { float x, y; } V2;
-typedef struct { float x, y, z; } V3;
-typedef struct { float x, y, z, w; } V4;
-
-
-//~ Textures
-
-typedef struct {
+struct HyTexture {
     uint32_t    rendererID;
     uint32_t    width;
     uint32_t    height;
     uint32_t    channels;
     const char* path;
-} HyTexture;
-
-typedef enum HyTextureFilterMode { HyTextureFilterMode_Linear, HyTextureFilterMode_Nearest } HyTextureFilterMode;
+};
 
 internal HyTexture* hy_texture_create(const char* path, HyTextureFilterMode filter)
 {
@@ -183,23 +180,20 @@ internal void hy_texture_bind(HyTexture* texture, uint32_t location)
     GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->rendererID));
 }
 
-//~ Framebuffer
+//~
+// Framebuffer
+//
 
-typedef struct {
+struct HyFramebuffer {
     uint32_t rendererID;
     uint32_t colorAttachmentRendererID;
     uint32_t depthAttachmentRendererID;
     
     uint32_t width;
     uint32_t height;
-} HyFramebuffer;
+};
 
-internal HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height);
-internal void          HyFramebuffer_Destroy(HyFramebuffer* framebuffer);
-internal void          HyFramebuffer_Resize(HyFramebuffer* framebuffer, uint32_t width, uint32_t height);
-internal void          HyFramebuffer_Bind(HyFramebuffer* framebuffer);
-internal void          HyFramebuffer_Unbind();
-
+// TODO(alex): Make it return a pointer;
 internal HyFramebuffer HyFramebuffer_Create(uint32_t width, uint32_t height)
 {
     HyFramebuffer framebuffer = {0};
@@ -264,100 +258,20 @@ internal void HyFramebuffer_Unbind()
 }
 
 //~
-/// Colors
-///
+// Shader
+//
 
-/// RGBA float colors.
-typedef struct {
-    float r;
-    float g;
-    float b;
-    float a;
-} HyColor;
-
-uint32_t white = 0xFFFFFFFF;
-uint32_t bg0 = 0x282828FF;
-uint32_t bg1 = 0x3C3836FF;
-uint32_t bg0_s = 0x32302FFF;
-uint32_t gray = 0x928374FF;
-uint32_t red0 = 0xCC241dFF;
-uint32_t red1 = 0xFB4939FF;
-uint32_t green0 = 0x98971AFF;
-uint32_t green1 = 0xB8BB26FF;
-uint32_t purple0 = 0xB16286FF;
-uint32_t purple1 = 0xD3869BFF;
-uint32_t aqua0 = 0x689D6AFF;
-uint32_t aqua1 = 0x8EC07CFF;
-uint32_t fg = 0xebdbb2ff;
-
-// TODO(alex): Remove?
-internal HyColor HyWhite = { 1.0f, 1.0f, 1.0f, 1.0f };
-internal HyColor HyDebugBg = { 0.0f, 0.0f, 0.0f, 0.75f };
-#if 0
-internal float HyColor_Grey2[] = {0.2f, 0.2f, 0.2f, 1.0f};
-internal float HyColor_Grey1[] = {0.1f, 0.1f, 0.1f, 1.0f};
-internal float HyColor_Grey05[] = {0.05f, 0.05f, 0.05f, 1.0f};
-internal float HyColor_Grey[] = {0.1f, 0.1f, 0.1f, 1.0f};
-internal float HyColor_Black[] = {0.0f, 0.0f, 0.0f, 1.0f};
-internal float HyColor_Red[] = {1.0f, 0.0f, 0.0f, 1.0f};
-internal float HyColor_Green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-internal float HyColor_Blue[] = {0.0f, 0.0f, 1.0f, 1.0f};
-internal float HyColor_Magenta[] = {1.0f, 0.0f, 1.0f, 1.0f};
-internal float HyColor_Transparent[] = {0.0f, 0.0f, 0.0f, 0.0f};
-#endif
-
-internal HyColor hex_to_HyColor(uint32_t val)
-{
-    HyColor result = {0};
-    result.r = ((val >> 24) & 0xff) / 255.0f;
-    result.g = ((val >> 16) & 0xff) / 255.0f;
-    result.b = ((val >> 8) & 0xff) / 255.0f;
-    result.a = ((val) & 0xff) / 255.0f;
-    
-    return result;
-}
-
-//~
-/// Camera
-///
-
-typedef struct {
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-    mat4 viewProjectionMatrix;
-    
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
-    
-    float fov;
-    float nearPlane;
-    float farPlane;
-    
-    vec3 worldUp;
-    
-    vec3 right;
-    vec3 up;
-    vec3 front;
-} HyCamera;
-
-//~
-/// Shader
-///
-
-#define HY_SHADER_MAP_SIZE 16
-
-typedef struct {
+struct HyShader {
     char name[128]; // TODO(alex): malloc
     uint32_t    id;
     
     int uniformLocationsMap[HY_SHADER_MAP_SIZE];
-} HyShader;
+};
 
-typedef struct {
+struct HyShaderLibrary {
     int todo;
     // TODO(alex): Implement
-} HyShaderLibrary;
+};
 
 internal void HY_Shader_CheckCompileErrors(uint32_t shader, const char* type)
 {
@@ -492,59 +406,12 @@ internal void HY_Shader_SetMat4(HyShader* shader, char* name, mat4 value)
     }
 }
 
-internal void hy_camera_update_vectors(HyCamera* camera, float aspectRatio)
-{
-    // Calculate the new Front vector
-    vec3 direction;
-    direction[0] = cos(glm_rad(camera->rotation[1])) * cos(glm_rad(camera->rotation[0]));
-    direction[1] = sin(glm_rad(camera->rotation[0]));
-    direction[2] = sin(glm_rad(camera->rotation[1])) * cos(glm_rad(camera->rotation[0]));
-    glm_vec3_normalize_to(direction, camera->front);
-    
-    // Also re-calculate the Right and Up vector
-    // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    vec3 fuCross;
-    glm_cross(camera->front, camera->worldUp, fuCross);
-    glm_normalize_to(fuCross, camera->right);
-    vec3 rfCross;
-    glm_cross(camera->right, camera->front, rfCross);
-    glm_normalize_to(rfCross, camera->up);
-    
-    vec3 front;
-    glm_vec3_add(camera->position, camera->front, front);
-    glm_lookat(camera->position, front, camera->up, camera->viewMatrix);
-    
-    glm_perspective(glm_rad(camera->fov), aspectRatio, camera->nearPlane, camera->farPlane, camera->projectionMatrix);
-    
-#if 0
-    // Calculate the new Front vector
-    vec3 direction;
-    direction[0] = cos(camera->rotation[1]) * cos(camera->rotation[0]);
-    direction[1] = sin(camera->rotation[0]);
-    direction[2] = sin(camera->rotation[1]) * cos(camera->rotation[0]);
-    glm_vec3_normalize_to(direction, camera->front);
-    
-    // Also re-calculate the Right and Up vector
-    // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    vec3 fuCross;
-    glm_cross(camera->front, camera->worldUp, fuCross);
-    glm_normalize_to(fuCross, camera->right);
-    vec3 rfCross;
-    glm_cross(camera->right, camera->front, rfCross);
-    glm_normalize_to(rfCross, camera->up);
-    
-    vec3 front;
-    glm_vec3_add(camera->position, camera->front, front);
-    glm_lookat(camera->position, front, camera->up, camera->viewMatrix);
-    
-    glm_perspective(glm_rad(camera->fov), aspectRatio, camera->nearPlane, camera->farPlane, camera->projectionMatrix);
-#endif
-}
-
-//~ Renderer2D
+//~
+// Camera2D
+//
 
 /// Camera 2D used for rendering.
-typedef struct {
+struct HyCamera2D {
     mat4 projectionMatrix;
     mat4 viewMatrix;
     mat4 viewProjectionMatrix;
@@ -555,7 +422,7 @@ typedef struct {
     float farPlane;
     
     vec4 viewport;
-} HyCamera2D;
+};
 
 internal void HyCamera2D_Resize(HyCamera2D* camera, float width, float height, float nearPlane, float farPlane)
 {
@@ -579,6 +446,10 @@ internal HyCamera2D HyCamera2D_Create(float width, float height, float nearPlane
     return camera;
 }
 
+//~
+// Renderer2D
+//
+
 typedef struct {
     vec3  Pos;
     float TexIndex;
@@ -587,13 +458,13 @@ typedef struct {
 } HyQuadVertex;
 
 /// Batch 2D Renderer stats. Start/reset must be managed manually.
-typedef struct {
+struct HyRenderer2DStats {
     uint32_t drawCount;
     uint32_t quadCount;
-} HyRenderer2DStats;
+};
 
 /// Batch 2D Renderer.
-typedef struct {
+struct HyRenderer2D {
     HyCamera2D* camera;
     
     uint32_t maxQuadCount;
@@ -620,18 +491,9 @@ typedef struct {
     HyTexture* asciiTexture; // Debug text
     
     HyRenderer2DStats stats;
-} HyRenderer2D;
+};
 
 global_variable HyRenderer2D g_renderer;
-
-internal void hy_renderer2d_init();
-internal void hy_renderer2d_shutdown();
-internal void hy_renderer2d_begin_scene(HyCamera2D* camera);
-internal void hy_renderer2d_end_scene();
-internal void hy_renderer2d_flush();
-
-internal HyRenderer2DStats hy_renderer2d_get_stats();
-internal void hy_renderer2d_reset_stats();
 
 internal HyRenderer2DStats hy_renderer2d_get_stats()
 {

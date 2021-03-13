@@ -8,7 +8,6 @@
 /// @{
 
 internal float hy_calc_cpu_load(unsigned long long idleTicks, unsigned long long totalTicks);
-internal unsigned long long hy_file_time_to_int64(FILETIME ft);
 internal float hy_get_cpu_load();
 
 /// @}
