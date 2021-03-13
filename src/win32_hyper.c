@@ -7,6 +7,7 @@
 // TODO(alex): Indexed font rendering like 4coder.
 // TODO(alex): Font rendering with stb_truetype.
 // TODO(alex): Font caching (safe img to disk to avoid computing at startup).
+// TODO(alex): What is the right way to add an icon without Visual Studio?
 
 #define MAINICON 101
 
@@ -65,8 +66,6 @@
 #define STRICT
 #endif
 
-#pragma warning(4:4505)
-
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
@@ -119,8 +118,6 @@
 #include "hy_platform_win32.c"
 #include "hy_renderer_win32_ogl.c"
 #include "hy_ui.c"
-
-// TODO(alex): What is the right way to add an icon without Visual Studio?
 
 /// Engine startup configuration read from .hyperrc
 typedef struct {

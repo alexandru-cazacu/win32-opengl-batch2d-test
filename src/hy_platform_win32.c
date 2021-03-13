@@ -716,7 +716,7 @@ internal int hy_window_create_borderless(HyWindow* hyWindow, HyWindowStartMode s
         ShowWindow(hyWindow->window, SW_MAXIMIZE);
     } else if (startMode == HyWindowStartMode_Fullscreen) {
         ShowWindow(hyWindow->window, SW_SHOWDEFAULT);
-        hy_toggle_fullscreen(hyWindow); // TODO(alex): Create set fullscreen func
+        hy_set_fullscreen(hyWindow, true);
     } else {
         ShowWindow(hyWindow->window, SW_SHOWDEFAULT);
     }
