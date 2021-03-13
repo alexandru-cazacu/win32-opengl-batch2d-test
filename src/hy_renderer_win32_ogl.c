@@ -2,6 +2,8 @@
 // OpenGL Error handling
 //
 
+#if HY_SLOW
+
 internal void hy_gl_clear_error()
 {
     while (glGetError() != GL_NO_ERROR);
@@ -82,6 +84,8 @@ internal void APIENTRY hy_gl_debug_output(GLenum source, GLenum type, unsigned i
              "  Severity: %s\n",
              id, message, sourceMessage, typeMessage, severityMessage);
 }
+
+#endif
 
 //~
 // Vectors
@@ -166,8 +170,6 @@ internal HyTexture* hy_texture_create(const char* path, HyTextureFilterMode filt
     GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
     
     return result;
-    
-    // TODO(alex): Delete texture when?
 }
 
 internal void hy_texture_destroy(HyTexture* texture)
@@ -597,7 +599,7 @@ typedef struct {
     uint32_t maxQuadCount;
     uint32_t maxVertexCount;
     uint32_t maxIndexCount;
-    int32_t maxTextures;
+    uint32_t maxTextures;
     
     uint32_t vao;
     uint32_t vbo;
@@ -605,7 +607,7 @@ typedef struct {
     
     HyShader* textureShader;
     uint32_t  whiteTexture;
-    uint32_t  whiteTextureSlot; // TODO(alex): Make 0 by default
+    uint32_t  whiteTextureSlot;
     
     uint32_t quadIndexCount;
     
@@ -613,7 +615,7 @@ typedef struct {
     HyQuadVertex* quadVertexBufferPtr;
     
     uint32_t textureSlots[32]; // TODO(alex): Maybe malloc ?
-    uint32_t textureSlotIndex; // TODO(alex): Make 1 by default
+    uint32_t textureSlotIndex;
     
     HyTexture* asciiTexture; // Debug text
     
@@ -647,17 +649,17 @@ internal void hy_renderer2d_init()
     
     HY_ASSERT(!renderer->quadVertexBufferBase, "Called hy_renderer2d_Init more than once.");
     
-    // TODO(alex): Check if error callback is supported
+#if HY_SLOW
     GL_CALL(glEnable(GL_DEBUG_OUTPUT));
     GL_CALL(glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS));
     GL_CALL(glDebugMessageCallback(hy_gl_debug_output, NULL));
     GL_CALL(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE));
-    
+#endif
     
     renderer->maxQuadCount = 10000;
     renderer->maxVertexCount = renderer->maxQuadCount * 4;
     renderer->maxIndexCount = renderer->maxQuadCount * 6;
-    GL_CALL(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &renderer->maxTextures));
+    GL_CALL(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &(int32_t)renderer->maxTextures));
     
     renderer->quadVertexBufferBase = (HyQuadVertex*)hy_malloc(sizeof(HyQuadVertex) * renderer->maxVertexCount);
     
@@ -704,6 +706,7 @@ internal void hy_renderer2d_init()
     
     GL_CALL(glBindVertexArray(0));
     
+    // Set white texture for rendering quads/textures in a single draw call.
     GL_CALL(glGenTextures(1, &renderer->whiteTexture));
     GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->whiteTexture));
     GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
@@ -757,11 +760,11 @@ internal void hy_renderer2d_begin_scene(HyCamera2D* camera)
     renderer->textureSlotIndex = 1;
     
     int loc = glGetUniformLocation(renderer->textureShader->id, "u_Textures");
-    int samplers[32]; // TODO(alex): Query max samplers.
-    for (int i = 0; i < 32; ++i) {
+    int samplers[renderer->maxTextures];
+    for (int i = 0; i < renderer->maxTextures; ++i) {
         samplers[i] = i; // TODO(alex): zero?
     }
-    GL_CALL(glUniform1iv(loc, 32, samplers));
+    GL_CALL(glUniform1iv(loc, renderer->maxTextures, samplers));
 }
 
 internal void hy_renderer2d_end_scene()
@@ -786,8 +789,7 @@ internal void hy_renderer2d_flush()
         GL_CALL(glBindTextureUnit(i, renderer->textureSlots[i]));
         //GL_CALL(glActiveTexture(GL_TEXTURE0 + i));
         //GL_CALL(glBindTexture(GL_TEXTURE_2D, renderer->textureSlots[i]));
-        // TODO(alex): What is the difference between the separate calls and the
-        // single one?
+        // TODO(alex): What is the difference between the separate calls and the single one?
     }
     
     GL_CALL(glBindVertexArray(renderer->vao));
