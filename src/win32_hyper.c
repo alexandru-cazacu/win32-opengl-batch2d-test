@@ -55,36 +55,9 @@
 #include "hy_platform_win32.c"
 #include "hy_renderer_win32_ogl.c"
 #include "hy_ui.c"
-
-/// Engine startup configuration read from .hyperrc
-typedef struct {
-    HyWindowStartMode startMode;
-    const char*       user;
-} HyConfig;
+#include "hy_config.c"
 
 global_variable HyCamera2D camera2D;
-
-internal int configHandler(void* user, const char* section, const char* name, const char* value)
-{
-    HyConfig* config = (HyConfig*)user;
-    
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-    if (MATCH("window", "startMode")) {
-        // config->startMode = strdup(value);
-        if (strcmp(value, "auto") == 0) {
-            config->startMode = HyWindowStartMode_Auto;
-        } else if (strcmp(value, "maximized") == 0) {
-            config->startMode = HyWindowStartMode_Maximized;
-        } else if (strcmp(value, "fullscreen") == 0) {
-            config->startMode = HyWindowStartMode_Fullscreen;
-        }
-    } else if (MATCH("misc", "user")) {
-        config->user = _strdup(value);
-    } else {
-        return 0; /* unknown section/name, error */
-    }
-    return 1;
-}
 
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
@@ -97,24 +70,12 @@ int hy_main(int argc, char* argv[])
 {
     hy_log_init();
     hy_timer_init();
-    
-    HyConfig config = {0};
-    config.startMode = HyWindowStartMode_Auto;
-    
-    HyFile* configFile = hy_read_file(".hypedrc");
-    if (configFile) {
-        ini_parse_string(configFile->data, configHandler, &config);
-        HY_INFO("Config loaded from '.hypedrc'");
-        HY_INFO("  - startMode=%d", config.startMode);
-        HY_INFO("  - user=%s", config.user);
-    } else {
-        HY_ERROR(".hypedrc not found");
-    }
+    HyConfig* config = hy_config_init();
     
     HyFile* testFile = hy_read_file("src/win32_hyper.c");
     
     HyWindow window = {0};
-    hy_window_create_borderless(&window, config.startMode, "Hyped");
+    hy_window_create_borderless(&window, config->startMode, "Hyped");
     hy_set_window_size_callback(&window, SizeCallback);
     
     if (!&window) { // ?
@@ -153,6 +114,8 @@ int hy_main(int argc, char* argv[])
     while (!hy_window_should_close(&window)) {
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
+        
+        hy_poll_events(&window);
         
         HyColor hcbg = hex_to_HyColor(bg0_s);
         HY_SetClearColorCmd(&hcbg);
@@ -267,16 +230,14 @@ int hy_main(int argc, char* argv[])
         
         hy_swap_buffers(&window);
         
-        hy_poll_events(&window);
-        
         lastTime = currTime;
         
         hy_sleep(1);
     }
     
     hy_texture_destroy(restoreIcon);
-    
     hy_window_destroy(&window);
+    hy_config_deinit(config);
     
     return 0;
 }

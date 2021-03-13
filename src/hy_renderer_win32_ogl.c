@@ -92,7 +92,6 @@ internal void APIENTRY hy_gl_debug_output(GLenum source, GLenum type, unsigned i
 #define GL_CALL(x) x;
 #endif // HY_SLOW
 
-
 //~
 // Textures
 //
