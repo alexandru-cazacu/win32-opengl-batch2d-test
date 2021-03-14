@@ -855,12 +855,6 @@ internal void draw_debug_text(const char* string, float x, float y, HyColor colo
             c = string[++i];
             continue;
         }
-        if (c == '/') {
-            currColor = hex_to_HyColor(gray);
-        }
-        if (c == '#') {
-            currColor = hex_to_HyColor(purple1);
-        }
         
         c -= (char)firstCharIndex;
         

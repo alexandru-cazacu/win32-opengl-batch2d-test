@@ -57,6 +57,8 @@
 #include "hy_ui.c"
 #include "hy_config.c"
 
+#include <git2.h>
+
 global_variable HyCamera2D camera2D;
 
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
@@ -64,6 +66,31 @@ internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int 
     // TODO(alex): Remove when use framebuffer
     HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
     GL_CALL(glViewport(0, 0, width, height));
+}
+
+typedef struct {
+    uint32_t changesCount;
+    char** paths;
+} status_data;
+
+int status_cb(const char *path, uint32_t status_flags, void *payload)
+{
+    status_data *repo_status_data = (status_data*)payload;
+    
+    size_t path_len = strlen(path);
+    
+    // Skip forders (we list files individually) and ignored files (from .gitignore)
+    if (path[path_len - 1] == '/' || status_flags & GIT_STATUS_IGNORED) {
+        return false;
+    }
+    
+    HY_INFO("%d %s", repo_status_data->changesCount, path);
+    repo_status_data->paths[repo_status_data->changesCount] = malloc(path_len * sizeof(char) + 1);
+    memcpy(repo_status_data->paths[repo_status_data->changesCount], path, path_len);
+    repo_status_data->paths[repo_status_data->changesCount][path_len] = '\0';
+    repo_status_data->changesCount++;
+    
+    return false;
 }
 
 int hy_main(int argc, char* argv[])
@@ -111,6 +138,30 @@ int hy_main(int argc, char* argv[])
     //GL_CALL(glEnable(GL_DEPTH_TEST));
     GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     
+    // ==============================
+    // Git test
+    
+    git_libgit2_init();
+    
+    // Check repo existence
+    int error = git_repository_open_ext(NULL, "C:/dev/hyped", GIT_REPOSITORY_OPEN_NO_SEARCH, NULL);
+    if (error == 0) {
+        HY_INFO("Current directory is a repository.");
+    } else if (error < 0) {
+        const git_error *e = git_error_last();
+        HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+    }
+    
+    // Open repo
+    git_repository* repo = NULL;
+    error = git_repository_open(&repo, "C:/dev/hyped");
+    
+    status_data repo_status_data = {0};
+    repo_status_data.paths = malloc(sizeof(char*) * 300);
+    error = git_status_foreach(repo, status_cb, &repo_status_data);
+    
+    // ==============================
+    
     while (!hy_window_should_close(&window)) {
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
@@ -133,16 +184,25 @@ int hy_main(int argc, char* argv[])
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             // Text content
+#if 0
             if (testFile) {
                 draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H + 210, hex_to_HyColor(fg));
             }
+#endif
             
             // Folder icon
-            draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, gitIcon, HyWhite);
+            //draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, gitIcon, HyWhite);
             
             // Project tree
-            draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
-            draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
+            //draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
+            //draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
+            
+            for(uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
+                draw_debug_text(repo_status_data.paths[i],
+                                24.0f,
+                                (float)window.height - HY_EDITOR_CAPTION_H - i * FONT_SIZE,
+                                hex_to_HyColor(fg));
+            }
             
             // Caption
             draw_quad_2c((vec3){ 0.0f, (float)window.height - HY_EDITOR_CAPTION_H }, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0_s));
@@ -184,20 +244,22 @@ int hy_main(int argc, char* argv[])
             // Pull
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, downloadIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
-            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
+            draw_debug_text("-", p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
             
             // Push
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, uploadIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
-            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
+            draw_debug_text("-", p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
             
             // Edits
+            char editsInfo[256] = {0};
+            snprintf(editsInfo, 256, "%d", repo_status_data.changesCount);
             draw_quad_2tc(p[0], p[1], (vec2){ FONT_SIZE, FONT_SIZE }, editIcon, hex_to_HyColor(fg));
             p[0] += FONT_SIZE;
-            draw_debug_text("0", p[0], p[1], hex_to_HyColor(fg));
-            p[0] += FONT_SIZE * 1.5f;
+            draw_debug_text(editsInfo, p[0], p[1], hex_to_HyColor(fg));
+            p[0] += FONT_SIZE * 2.0f;
             
             // Debug info
             char glInfo[256] = {0};
@@ -234,6 +296,9 @@ int hy_main(int argc, char* argv[])
         
         hy_sleep(1);
     }
+    
+    git_repository_free(repo);
+    git_libgit2_shutdown();
     
     hy_texture_destroy(restoreIcon);
     hy_window_destroy_borderless(&window);

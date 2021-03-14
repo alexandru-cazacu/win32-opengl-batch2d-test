@@ -1,0 +1,11 @@
+prefix="C:/devtools/vcpkg/packages/libgit2_x64-windows/debug"
+libdir="C:/devtools/vcpkg/packages/libgit2_x64-windows/debug/lib"
+includedir="C:/devtools/vcpkg/packages/libgit2_x64-windows/debug/include"
+
+Name: libgit2
+Description: The git library, take 2
+Version: 1.1.0
+Libs: -L${libdir} -lgit2
+Libs.private: -lwinhttp -lrpcrt4 -lcrypt32 -lole32 -lhttp_parser
+Requires.private: libpcre zlib
+Cflags: -I${includedir} 

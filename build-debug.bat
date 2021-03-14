@@ -8,16 +8,18 @@ set buildDir=%cd%\build\Win-x64-%target%
 call .\3rd\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
 
 set compilerFlags=^
+	-diagnostics:column ^
     -Oi -MTd -Zi -GR- -EHa- -FC -nologo -std:c++17 ^
     -W4 -WX -wd4201 -wd4100 -wd4189 ^
     -I %cd%\src ^
     -I %cd%\3rd ^
     -I %cd%\3rd\cglm\include ^
+    -I %cd%\3rd\libgit2\include ^
     -D HY_SLOW ^
     -D HY_ENABLE_LOG
 
 set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
-set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib
+set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib git2.lib pcred.lib -LIBPATH:%cd%\3rd\libgit2\debug\lib
 
 if not exist %buildDir% mkdir %buildDir%
 pushd %buildDir%
