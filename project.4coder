@@ -17,6 +17,7 @@ blacklist_patterns = {
     "bin",
     "bin-int",
     "build",
+    "docs",
     "vcpkg",
     ".git",
 };

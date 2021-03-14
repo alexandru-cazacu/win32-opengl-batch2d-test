@@ -236,7 +236,7 @@ int hy_main(int argc, char* argv[])
     }
     
     hy_texture_destroy(restoreIcon);
-    hy_window_destroy(&window);
+    hy_window_destroy_borderless(&window);
     hy_config_deinit(config);
     
     return 0;

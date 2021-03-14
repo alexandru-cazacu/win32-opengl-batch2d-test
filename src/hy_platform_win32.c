@@ -791,11 +791,57 @@ internal int hy_window_create_borderless(HyWindow* hyWindow, HyWindowStartMode s
     return HY_NO_ERROR;
 }
 
-internal void hy_window_destroy(HyWindow* hyWindow)
+internal void hy_window_destroy_borderless(HyWindow* hyWindow)
 {
     DestroyWindow(hyWindow->window);
     fglDestroyOpenGLContext(&hyWindow->glContext);
     fglUnloadOpenGL();
+}
+
+///
+/// Creates a new Window with a modern OpenGL context.
+/// The window has no borders, but it behaves like a native Windows window.
+///
+internal int hy_window_create(HyWindow* hyWindow, HyWindowStartMode startMode, const char* title)
+{
+    if (!g_HyperEngineInitialized) {
+        return HY_NOT_INITIALIZED;
+    }
+    
+    ATOM cls = RegisterClassExW(&(WNDCLASSEXW) {
+                                    .cbSize = sizeof(WNDCLASSEXW),
+                                    //.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+                                    .lpfnWndProc = win32_wndproc,
+                                    .hInstance = HINST_THISCOMPONENT,
+                                    //.hInstance = GetModuleHandle(NULL),
+                                    .hCursor = LoadCursor(NULL, IDC_ARROW),
+                                    .hIcon = LoadIcon(HINST_THISCOMPONENT, MAKEINTRESOURCE(101)),
+                                    .hbrBackground = CreateSolidBrush(RGB(25, 25, 25)),
+                                    //.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+                                    .lpszClassName = L"HyperWindowClass"
+                                });
+    
+    hyWindow->window = CreateWindowExW(WS_EX_APPWINDOW | WS_EX_LAYERED,
+                                       (LPWSTR)MAKEINTATOM(cls),
+                                       L"Hyper",
+                                       WS_OVERLAPPEDWINDOW | WS_SIZEBOX,        // style
+                                       CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, // x, y, w, h
+                                       NULL, NULL,                              // parent window, menu
+                                       HINST_THISCOMPONENT, hyWindow);          // instance, param
+    
+    hyWindow->deviceContext = GetDC(hyWindow->window);
+    
+    ShowWindow(hyWindow->window, SW_SHOWDEFAULT);
+    
+    // Issue paint call
+    UpdateWindow(hyWindow->window);
+    
+    return HY_NO_ERROR;
+}
+
+internal void hy_window_destroy(HyWindow* hyWindow)
+{
+    DestroyWindow(hyWindow->window);
 }
 
 internal int hy_main(int argc, char* argv[]);
