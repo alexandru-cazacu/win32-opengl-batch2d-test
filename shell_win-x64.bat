@@ -5,5 +5,3 @@ for /f "delims=" %%i in ('"C:\Program Files (x86)\Microsoft Visual Studio\Instal
 echo Found location is %VSPATH%
 
 call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-set PATH=%cd%\ctime;%PATH%

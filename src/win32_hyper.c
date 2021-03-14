@@ -143,8 +143,14 @@ int hy_main(int argc, char* argv[])
     
     git_libgit2_init();
     
+    // TODO(alex): Make a cross platform API.
+    char* repo_path = "";
+    if (argc > 1) {
+        repo_path = argv[1];
+    }
+    
     // Check repo existence
-    int error = git_repository_open_ext(NULL, "C:/dev/hyped", GIT_REPOSITORY_OPEN_NO_SEARCH, NULL);
+    int error = git_repository_open_ext(NULL, repo_path, GIT_REPOSITORY_OPEN_NO_SEARCH, NULL);
     if (error == 0) {
         HY_INFO("Current directory is a repository.");
     } else if (error < 0) {
@@ -152,13 +158,23 @@ int hy_main(int argc, char* argv[])
         HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
     }
     
+    status_data repo_status_data = {0};
+    
     // Open repo
     git_repository* repo = NULL;
-    error = git_repository_open(&repo, "C:/dev/hyped");
-    
-    status_data repo_status_data = {0};
-    repo_status_data.paths = malloc(sizeof(char*) * 300);
-    error = git_status_foreach(repo, status_cb, &repo_status_data);
+    error = git_repository_open(&repo, repo_path);
+    if (error < 0) {
+        const git_error *e = git_error_last();
+        HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+    } else {
+        repo_status_data.paths = malloc(sizeof(char*) * 300);
+        error = git_status_foreach(repo, status_cb, &repo_status_data);
+        
+        if (error < 0) {
+            const git_error *e = git_error_last();
+            HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+        }
+    }
     
     // ==============================
     

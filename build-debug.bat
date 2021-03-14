@@ -19,9 +19,13 @@ set compilerFlags=^
     -D HY_ENABLE_LOG
 
 set linkerFlags=-WX -opt:ref -incremental:no -subsystem:console
-set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib git2.lib pcred.lib -LIBPATH:%cd%\3rd\libgit2\debug\lib
+set libs=kernel32.lib user32.lib gdi32.lib opengl32.lib dwmapi.lib shell32.lib uxtheme.lib git2.lib -LIBPATH:%cd%\3rd\libgit2\debug\lib
 
 if not exist %buildDir% mkdir %buildDir%
+if not exist %buildDir%\git2.dll copy %cd%\3rd\libgit2\debug\bin\git2.dll %buildDir%
+if not exist %buildDir%\zlibd1.dll copy %cd%\3rd\libgit2\debug\bin\zlibd1.dll %buildDir%
+if not exist %buildDir%\pcre.dll copy %cd%\3rd\libgit2\release\bin\pcre.dll %buildDir%
+if not exist %buildDir%\assets mklink /D %buildDir%\assets %cd%\assets
 pushd %buildDir%
 	del *.pdb > NUL 2> NUL
 	cl %compilerFlags% %files% /link %linkerFlags% %libs% /out:%prjName%.exe
