@@ -857,6 +857,11 @@ internal int hy_main(int argc, char* argv[]);
 
 // Subsystem:console
 int main(int argc, char* argv[]) {
+    
+    for (int i = 0; i < argc; i++) {
+        HY_INFO("%d: %s\n", i, argv[i]);
+    }
+    
     hy_main(argc, argv);
 }
 
@@ -870,7 +875,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     
     // argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     argv = CommandLineToArgvW(pCmdLine, &argc);
-    if (NULL == argv) {
+    if (argv == NULL) {
         HY_INFO("CommandLineToArgvW failed\n");
         return 0;
     } else {
