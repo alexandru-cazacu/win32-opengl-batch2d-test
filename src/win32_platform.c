@@ -414,7 +414,7 @@ internal LRESULT win32_handle_nchittest(HyWindow *data, int x, int y)
 {
     // Exit early or we will get artifacts where window stays fullscreen but is also draggable.
     if (data->fullscreen) {
-        return HTNOWHERE;
+        return HTCLIENT;
     }
     
 #if 0
@@ -464,7 +464,7 @@ internal LRESULT win32_handle_nchittest(HyWindow *data, int x, int y)
         return HTCAPTION;
     }
     
-	return HTNOWHERE;
+	return HTCLIENT;
 }
 
 internal void win32_handle_paint(HyWindow *data)
@@ -693,6 +693,15 @@ internal void hy_poll_events(HyWindow* hyWindow)
                 if (vkCode == 'F') {
                     hy_toggle_fullscreen(hyWindow);
                 }
+            } break;
+            
+            case WM_CHAR: {
+                
+            } break;
+            
+            case WM_LBUTTONDOWN: {
+                POINTS p = MAKEPOINTS(message.lParam);
+                HY_INFO("%d %d", p.x, p.y);
             } break;
             
             default: {

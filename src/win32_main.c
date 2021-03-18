@@ -52,8 +52,8 @@
 #pragma warning(pop)
 
 #include "hy_file.c"
-#include "hy_platform_win32.c"
-#include "hy_renderer_win32_ogl.c"
+#include "win32_platform.c"
+#include "win32_renderer_ogl.c"
 #include "hy_ui.c"
 #include "hy_config.c"
 
@@ -162,24 +162,61 @@ int hy_main(int argc, char* argv[])
     
     // ==============================
     
+    hyui_init();
+    
     while (!hy_window_should_close(&window)) {
         float currTime = hy_timer_get_milliseconds();
         float dt = currTime - lastTime;
         
+        // Update
         hy_poll_events(&window);
         
+        // Render
         HyColor hcbg = hex_to_HyColor(bg0_s);
         HY_SetClearColorCmd(&hcbg);
         HY_ClearCmd();
         
+#if 0
         HyRenderer2DStats stats = hy_renderer2d_get_stats();
-        
         hy_renderer2d_reset_stats();
+#endif
+        
         hy_renderer2d_begin_scene(&camera2D);
         {
             local_persist float cpuLoad = 0.0f;
             local_persist float currCpuLoad = 0.0f;
             
+            hyui_begin("Root", window.width, window.height);
+            {
+                hyui_text("Staged Changes");
+                
+                hyui_button("Commit");
+                
+                hyui_text("Changes");
+                
+                for(uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
+                    hyui_text(repo_status_data.paths[i]);
+                }
+                
+                hyui_button("Stage all");
+                hyui_button("Unstage all");
+                
+                hyui_begin_row();
+                {
+                    
+                    hyui_icon_button(hyperIcon);
+                    hyui_icon_button(gitIcon);
+                    hyui_icon_button(editIcon);
+                    hyui_icon_button(downloadIcon);
+                    hyui_icon_button(uploadIcon);
+                }
+                hyui_end_row();
+            }
+            hyui_end();
+            
+            hyui_render();
+            
+#if 0
             cpuLoad = (float)hy_get_cpu_load();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
@@ -196,13 +233,6 @@ int hy_main(int argc, char* argv[])
             // Project tree
             //draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             //draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
-            
-            for(uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
-                draw_debug_text(repo_status_data.paths[i],
-                                24.0f,
-                                (float)window.height - HY_EDITOR_CAPTION_H - i * FONT_SIZE,
-                                hex_to_HyColor(fg));
-            }
             
             // Caption
             draw_quad_2c((vec3){ 0.0f, (float)window.height - HY_EDITOR_CAPTION_H }, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0_s));
@@ -276,6 +306,7 @@ int hy_main(int argc, char* argv[])
             p[0] += FONT_SIZE * 20.0f;
             draw_debug_text(cpuInfo, p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
+#endif
             
 #if 0
             p[0] = 0;

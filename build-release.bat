@@ -2,7 +2,7 @@
 
 set prjName=Hyped
 set target=Release
-set files=%cd%\src\win32_hyper.c
+set files=%cd%\src\win32_main.c
 set buildDir=%cd%\build\Win-x64-%target%
 
 call .\3rd\ctime\ctime -begin %prjName%_Win-x64-%target%.ctime
