@@ -22,9 +22,9 @@ internal void hy_log(const char* msg, const char* file, int line, const char* co
 
 internal void hy_log_init()
 {
-    log_set_level(LOG_INFO);
-    
-    // TODO(alex): Fix
+  log_set_level(LOG_INFO);
+
+  // TODO(alex): Fix
 #if 0
     if (IsDebuggerPresent()) {
         HY_INFO("Debugger present");
@@ -33,8 +33,8 @@ internal void hy_log_init()
         HY_INFO("Debugger not found. Assertion will silently crash.");
     }
 #endif
-    
-    HY_INFO("[Logger] Initialized.");
+
+  HY_INFO("[Logger] Initialized.");
 }
 
 internal void hy_log(const char* msg, const char* file, int line, const char* color, const char* level)

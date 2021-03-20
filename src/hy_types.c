@@ -6,21 +6,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef int8_t  s8;
-typedef int16_t s16;
-typedef int32_t s32;
-typedef int64_t s64;
-
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
-typedef float  r32;
-typedef double r64;
-
-typedef bool b32;
-
 #define Pi32 3.14159265359f
 
 #define internal        static /// Unity Build. For static functions.
@@ -47,18 +32,18 @@ typedef bool b32;
 // NOTE(alex): Assert that does't log, just crashes.
 #if HY_SLOW
 #define HY_FASSERT(x)                                                                                                  \
-if (!(x)) {                                                                                                          \
-*(int*)0 = 0;                                                                                                      \
-}
+  if (!(x)) {                                                                                                          \
+    *(int*)0 = 0;                                                                                                      \
+  }
 #else
 #define HY_FASSERT(x)
 #endif
 
-inline u32 SafeTruncateU64(u64 value)
+inline uint32_t SafeTruncateU64(uint64_t value)
 {
-    HY_FASSERT(value < 0xffffffff);
-    u32 result = (u32)value;
-    return result;
+  HY_FASSERT(value < 0xffffffff);
+  uint32_t result = (uint32_t)value;
+  return result;
 }
 
 typedef enum HyError { HY_NO_ERROR, HY_NOT_INITIALIZED, HY_PLATFORM_ERROR } HyError;
