@@ -54,7 +54,7 @@
 #include "hy_file.c"
 #include "win32_platform.c"
 #include "win32_renderer_ogl.c"
-#include "hy_ui.c"
+#include "hy_imgui.c"
 #include "hy_config.c"
 
 #include <git2.h>
@@ -63,175 +63,175 @@ global_variable HyCamera2D camera2D;
 
 internal void SizeCallback(HyWindow* hyWindow, unsigned int width, unsigned int height)
 {
-  // TODO(alex): Remove when use framebuffer
-  HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
-  GL_CALL(glViewport(0, 0, width, height));
+    // TODO(alex): Remove when use framebuffer
+    HyCamera2D_Resize(&camera2D, (float)width, (float)height, -1.0f, 1.0f);
+    GL_CALL(glViewport(0, 0, width, height));
 }
 
 typedef struct {
-  uint32_t changesCount;
-  char**   paths;
+    uint32_t changesCount;
+    char**   paths;
 } status_data;
 
 int status_cb(const char* path, uint32_t status_flags, void* payload)
 {
-  status_data* repo_status_data = (status_data*)payload;
-
-  size_t path_len = strlen(path);
-
-  // Skip forders (we list files individually) and ignored files (from .gitignore)
-  if (path[path_len - 1] == '/' || status_flags & GIT_STATUS_IGNORED) {
+    status_data* repo_status_data = (status_data*)payload;
+    
+    size_t path_len = strlen(path);
+    
+    // Skip forders (we list files individually) and ignored files (from .gitignore)
+    if (path[path_len - 1] == '/' || status_flags & GIT_STATUS_IGNORED) {
+        return false;
+    }
+    
+    HY_INFO("%d %s", repo_status_data->changesCount, path);
+    repo_status_data->paths[repo_status_data->changesCount] = malloc(path_len * sizeof(char) + 1);
+    memcpy(repo_status_data->paths[repo_status_data->changesCount], path, path_len);
+    repo_status_data->paths[repo_status_data->changesCount][path_len] = '\0';
+    repo_status_data->changesCount++;
+    
     return false;
-  }
-
-  HY_INFO("%d %s", repo_status_data->changesCount, path);
-  repo_status_data->paths[repo_status_data->changesCount] = malloc(path_len * sizeof(char) + 1);
-  memcpy(repo_status_data->paths[repo_status_data->changesCount], path, path_len);
-  repo_status_data->paths[repo_status_data->changesCount][path_len] = '\0';
-  repo_status_data->changesCount++;
-
-  return false;
 }
 
 int hy_main(int argc, char* argv[])
 {
-  hy_log_init();
-  hy_timer_init();
-  HyConfig* config = hy_config_init();
-
-  HyFile* testFile = hy_read_file("src/win32_hyper.c");
-
-  HyWindow window = {0};
-  hy_window_create_borderless(&window, config->startMode, "Hyped");
-  hy_set_window_size_callback(&window, SizeCallback);
-
-  if (!&window) { // ?
-    MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
-    ExitProcess(0);
-  }
-
-  camera2D = HyCamera2D_Create((float)window.width, (float)window.height, -1, 1);
-
-  hy_renderer2d_init();
-
-  HyTexture* asciiTexture = hy_texture_create("assets/textures/Fira Code-9(18).png", HyTextureFilterMode_Linear);
-
-  HyTexture* hyperIcon = hy_texture_create("assets/icons/hyper-logo-24.png", HyTextureFilterMode_Linear);
-
-  HyTexture* gitIcon = hy_texture_create("assets/icons/git.png", HyTextureFilterMode_Linear);
-  HyTexture* uploadIcon = hy_texture_create("assets/icons/upload.png", HyTextureFilterMode_Linear);
-  HyTexture* downloadIcon = hy_texture_create("assets/icons/download.png", HyTextureFilterMode_Linear);
-  HyTexture* editIcon = hy_texture_create("assets/icons/edit.png", HyTextureFilterMode_Linear);
-
-  HyTexture* closeIcon = hy_texture_create("assets/icons/chrome-close.png", HyTextureFilterMode_Linear);
-  HyTexture* restoreIcon = hy_texture_create("assets/icons/chrome-restore.png", HyTextureFilterMode_Linear);
-  HyTexture* minimizeIcon = hy_texture_create("assets/icons/chrome-minimize.png", HyTextureFilterMode_Linear);
-  HyTexture* maximizeIcon = hy_texture_create("assets/icons/chrome-maximize.png", HyTextureFilterMode_Linear);
-
-  // TODO(alex): Move into renderer init struct
-  g_renderer.asciiTexture = asciiTexture;
-
-  float lastTime = 0.0f;
-
-  GL_CALL(glEnable(GL_CULL_FACE));
-  GL_CALL(glEnable(GL_BLEND));
-  //GL_CALL(glEnable(GL_DEPTH_TEST));
-  GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-  // ==============================
-  // Git test
-
-  git_libgit2_init();
-
-  // TODO(alex): Make a cross platform API.
-  char* repo_path = "";
-  if (argc > 1) {
-    repo_path = argv[1];
-  }
-
-  // Check repo existence
-  int error = git_repository_open_ext(NULL, repo_path, GIT_REPOSITORY_OPEN_NO_SEARCH, NULL);
-  if (error == 0) {
-    HY_INFO("Current directory is a repository.");
-  } else if (error < 0) {
-    const git_error* e = git_error_last();
-    HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
-  }
-
-  status_data repo_status_data = {0};
-
-  // Open repo
-  git_repository* repo = NULL;
-  error = git_repository_open(&repo, repo_path);
-  if (error < 0) {
-    const git_error* e = git_error_last();
-    HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
-  } else {
-    repo_status_data.paths = malloc(sizeof(char*) * 300);
-    error = git_status_foreach(repo, status_cb, &repo_status_data);
-
-    if (error < 0) {
-      const git_error* e = git_error_last();
-      HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+    hy_log_init();
+    hy_timer_init();
+    HyConfig* config = hy_config_init();
+    
+    HyFile* testFile = hy_read_file("src/win32_hyper.c");
+    
+    HyWindow window = {0};
+    hy_window_create_borderless(&window, config->startMode, "Hyped");
+    hy_set_window_size_callback(&window, SizeCallback);
+    
+    if (!&window) { // ?
+        MessageBox(NULL, "Failed to create window.", "Hyper", MB_ICONERROR);
+        ExitProcess(0);
     }
-  }
-
-  // ==============================
-
-  hyui_init();
-
-  while (!hy_window_should_close(&window)) {
-    float currTime = hy_timer_get_milliseconds();
-    float dt = currTime - lastTime;
-
-    // Update
-    hy_poll_events(&window);
-
-    // Render
-    HyColor hcbg = hex_to_HyColor(bg0_s);
-    HY_SetClearColorCmd(&hcbg);
-    HY_ClearCmd();
-
+    
+    camera2D = HyCamera2D_Create((float)window.width, (float)window.height, -1, 1);
+    
+    hy_renderer2d_init();
+    
+    HyTexture* asciiTexture = hy_texture_create("assets/textures/Fira Code-9(18).png", HyTextureFilterMode_Linear);
+    
+    HyTexture* hyperIcon = hy_texture_create("assets/icons/hyper-logo-24.png", HyTextureFilterMode_Linear);
+    
+    HyTexture* gitIcon = hy_texture_create("assets/icons/git.png", HyTextureFilterMode_Linear);
+    HyTexture* uploadIcon = hy_texture_create("assets/icons/upload.png", HyTextureFilterMode_Linear);
+    HyTexture* downloadIcon = hy_texture_create("assets/icons/download.png", HyTextureFilterMode_Linear);
+    HyTexture* editIcon = hy_texture_create("assets/icons/edit.png", HyTextureFilterMode_Linear);
+    
+    HyTexture* closeIcon = hy_texture_create("assets/icons/chrome-close.png", HyTextureFilterMode_Linear);
+    HyTexture* restoreIcon = hy_texture_create("assets/icons/chrome-restore.png", HyTextureFilterMode_Linear);
+    HyTexture* minimizeIcon = hy_texture_create("assets/icons/chrome-minimize.png", HyTextureFilterMode_Linear);
+    HyTexture* maximizeIcon = hy_texture_create("assets/icons/chrome-maximize.png", HyTextureFilterMode_Linear);
+    
+    // TODO(alex): Move into renderer init struct
+    g_renderer.asciiTexture = asciiTexture;
+    
+    float lastTime = 0.0f;
+    
+    GL_CALL(glEnable(GL_CULL_FACE));
+    GL_CALL(glEnable(GL_BLEND));
+    //GL_CALL(glEnable(GL_DEPTH_TEST));
+    GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    
+    // ==============================
+    // Git test
+    
+    git_libgit2_init();
+    
+    // TODO(alex): Make a cross platform API.
+    char* repo_path = "";
+    if (argc > 1) {
+        repo_path = argv[1];
+    }
+    
+    // Check repo existence
+    int error = git_repository_open_ext(NULL, repo_path, GIT_REPOSITORY_OPEN_NO_SEARCH, NULL);
+    if (error == 0) {
+        HY_INFO("Current directory is a repository.");
+    } else if (error < 0) {
+        const git_error* e = git_error_last();
+        HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+    }
+    
+    status_data repo_status_data = {0};
+    
+    // Open repo
+    git_repository* repo = NULL;
+    error = git_repository_open(&repo, repo_path);
+    if (error < 0) {
+        const git_error* e = git_error_last();
+        HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+    } else {
+        repo_status_data.paths = malloc(sizeof(char*) * 300);
+        error = git_status_foreach(repo, status_cb, &repo_status_data);
+        
+        if (error < 0) {
+            const git_error* e = git_error_last();
+            HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
+        }
+    }
+    
+    // ==============================
+    
+    hyui_init();
+    
+    while (!hy_window_should_close(&window)) {
+        float currTime = hy_timer_get_milliseconds();
+        float dt = currTime - lastTime;
+        
+        // Update
+        hy_poll_events(&window);
+        
+        // Render
+        HyColor hcbg = hex_to_HyColor(bg0_s);
+        HY_SetClearColorCmd(&hcbg);
+        HY_ClearCmd();
+        
 #if 0
         HyRenderer2DStats stats = hy_renderer2d_get_stats();
         hy_renderer2d_reset_stats();
 #endif
-
-    hy_renderer2d_begin_scene(&camera2D);
-    {
-      local_persist float cpuLoad = 0.0f;
-      local_persist float currCpuLoad = 0.0f;
-
-      hyui_begin("Root", window.width, window.height);
-      {
-        hyui_text("Staged Changes");
-
-        hyui_button("Commit");
-
-        hyui_text("Changes");
-
-        for (uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
-          hyui_text(repo_status_data.paths[i]);
-        }
-
-        hyui_button("Stage all");
-        hyui_button("Unstage all");
-
-        hyui_begin_row();
+        
+        hy_renderer2d_begin_scene(&camera2D);
         {
-
-          hyui_icon_button(hyperIcon);
-          hyui_icon_button(gitIcon);
-          hyui_icon_button(editIcon);
-          hyui_icon_button(downloadIcon);
-          hyui_icon_button(uploadIcon);
-        }
-        hyui_end_row();
-      }
-      hyui_end();
-
-      hyui_render();
-
+            local_persist float cpuLoad = 0.0f;
+            local_persist float currCpuLoad = 0.0f;
+            
+            hyui_begin("Root", window.width, window.height);
+            {
+                hyui_text("Staged Changes");
+                
+                hyui_button("Commit");
+                
+                hyui_text("Changes");
+                
+                for (uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
+                    hyui_text(repo_status_data.paths[i]);
+                }
+                
+                hyui_button("Stage all");
+                hyui_button("Unstage all");
+                
+                hyui_begin_row();
+                {
+                    
+                    hyui_icon_button(hyperIcon);
+                    hyui_icon_button(gitIcon);
+                    hyui_icon_button(editIcon);
+                    hyui_icon_button(downloadIcon);
+                    hyui_icon_button(uploadIcon);
+                }
+                hyui_end_row();
+            }
+            hyui_end();
+            
+            hyui_render();
+            
 #if 0
             cpuLoad = (float)hy_get_cpu_load();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
@@ -323,7 +323,7 @@ int hy_main(int argc, char* argv[])
             draw_debug_text(cpuInfo, p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
 #endif
-
+            
 #if 0
             p[0] = 0;
             p[1] = window.height - FONT_SIZE * 2;
@@ -334,22 +334,22 @@ int hy_main(int argc, char* argv[])
             p[1] -= FONT_SIZE;
             draw_debug_text(cpuInfo, 12.0f, p[1], hex_to_HyColor(fg));
 #endif
+        }
+        hy_renderer2d_end_scene();
+        
+        hy_swap_buffers(&window);
+        
+        lastTime = currTime;
+        
+        hy_sleep(1);
     }
-    hy_renderer2d_end_scene();
-
-    hy_swap_buffers(&window);
-
-    lastTime = currTime;
-
-    hy_sleep(1);
-  }
-
-  git_repository_free(repo);
-  git_libgit2_shutdown();
-
-  hy_texture_destroy(restoreIcon);
-  hy_window_destroy_borderless(&window);
-  hy_config_deinit(config);
-
-  return 0;
+    
+    git_repository_free(repo);
+    git_libgit2_shutdown();
+    
+    hy_texture_destroy(restoreIcon);
+    hy_window_destroy_borderless(&window);
+    hy_config_deinit(config);
+    
+    return 0;
 }

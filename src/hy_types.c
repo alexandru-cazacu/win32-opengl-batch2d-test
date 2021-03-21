@@ -32,18 +32,18 @@
 // NOTE(alex): Assert that does't log, just crashes.
 #if HY_SLOW
 #define HY_FASSERT(x)                                                                                                  \
-  if (!(x)) {                                                                                                          \
-    *(int*)0 = 0;                                                                                                      \
-  }
+if (!(x)) {                                                                                                          \
+*(int*)0 = 0;                                                                                                      \
+}
 #else
 #define HY_FASSERT(x)
 #endif
 
 inline uint32_t SafeTruncateU64(uint64_t value)
 {
-  HY_FASSERT(value < 0xffffffff);
-  uint32_t result = (uint32_t)value;
-  return result;
+    HY_FASSERT(value < 0xffffffff);
+    uint32_t result = (uint32_t)value;
+    return result;
 }
 
 typedef enum HyError { HY_NO_ERROR, HY_NOT_INITIALIZED, HY_PLATFORM_ERROR } HyError;
