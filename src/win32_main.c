@@ -51,6 +51,8 @@
 
 #pragma warning(pop)
 
+global_variable int g_ShowDebugOverlay = false;
+
 #include "hy_file.c"
 #include "win32_platform.c"
 #include "win32_renderer_ogl.c"
@@ -73,7 +75,7 @@ typedef struct {
     char**   paths;
 } status_data;
 
-int status_cb(const char* path, uint32_t status_flags, void* payload)
+int git_status_callback(const char* path, uint32_t status_flags, void* payload)
 {
     status_data* repo_status_data = (status_data*)payload;
     
@@ -168,7 +170,7 @@ int hy_main(int argc, char* argv[])
         HY_ERROR("Error %d/%d: %s", error, e->klass, e->message);
     } else {
         repo_status_data.paths = malloc(sizeof(char*) * 300);
-        error = git_status_foreach(repo, status_cb, &repo_status_data);
+        error = git_status_foreach(repo, git_status_callback, &repo_status_data);
         
         if (error < 0) {
             const git_error* e = git_error_last();
@@ -192,10 +194,8 @@ int hy_main(int argc, char* argv[])
         HY_SetClearColorCmd(&hcbg);
         HY_ClearCmd();
         
-#if 0
         HyRenderer2DStats stats = hy_renderer2d_get_stats();
         hy_renderer2d_reset_stats();
-#endif
         
         hy_renderer2d_begin_scene(&camera2D);
         {
@@ -206,20 +206,18 @@ int hy_main(int argc, char* argv[])
             {
                 hyui_text("Staged Changes");
                 
-                hyui_button("Commit");
-                
                 hyui_text("Changes");
                 
                 for (uint32_t i = 0; i < repo_status_data.changesCount; ++i) {
                     hyui_text(repo_status_data.paths[i]);
                 }
                 
-                hyui_button("Stage all");
-                hyui_button("Unstage all");
+                hyui_button("Test button");
+                
+                hyui_text("Icon buttons:");
                 
                 hyui_begin_row();
                 {
-                    
                     hyui_icon_button(hyperIcon);
                     hyui_icon_button(gitIcon);
                     hyui_icon_button(editIcon);
@@ -232,23 +230,13 @@ int hy_main(int argc, char* argv[])
             
             hyui_render();
             
-#if 0
             cpuLoad = (float)hy_get_cpu_load();
             currCpuLoad += (cpuLoad - currCpuLoad) * (dt / 1000.0f);
             
             // Text content
-#if 0
             if (testFile) {
                 draw_debug_text(testFile->data, 312.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H + 210, hex_to_HyColor(fg));
             }
-#endif
-            
-            // Folder icon
-            //draw_quad_2tc(12.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, (vec2){ 16, 16 }, gitIcon, HyWhite);
-            
-            // Project tree
-            //draw_debug_text("Hyped", 30.0f, (float)window.height - 16 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
-            //draw_debug_text("src", 24.0f, (float)window.height - 16 * 2 - 12 - HY_EDITOR_CAPTION_H, hex_to_HyColor(fg));
             
             // Caption
             draw_quad_2c((vec3){ 0.0f, (float)window.height - HY_EDITOR_CAPTION_H }, (vec2){window.width, HY_EDITOR_CAPTION_H}, hex_to_HyColor(bg0_s));
@@ -322,18 +310,18 @@ int hy_main(int argc, char* argv[])
             p[0] += FONT_SIZE * 20.0f;
             draw_debug_text(cpuInfo, p[0], p[1], hex_to_HyColor(fg));
             p[0] += FONT_SIZE * 1.5f;
-#endif
             
-#if 0
-            p[0] = 0;
-            p[1] = window.height - FONT_SIZE * 2;
-            draw_quad_2c((vec2){0.0f, (float)window.height - FONT_SIZE * 8 }, (vec2){600.0f, 300.0f}, HyDebugBg);
-            draw_debug_text(glInfo, 12.0f, p[1], hex_to_HyColor(fg));
-            p[1] -= FONT_SIZE * 4;
-            draw_debug_text(drawInfo, 12.0f, p[1], hex_to_HyColor(fg));
-            p[1] -= FONT_SIZE;
-            draw_debug_text(cpuInfo, 12.0f, p[1], hex_to_HyColor(fg));
-#endif
+            if (g_ShowDebugOverlay) {
+                
+                p[0] = 0;
+                p[1] = window.height - FONT_SIZE * 2;
+                draw_quad_2c((vec2){0.0f, (float)window.height - FONT_SIZE * 8 }, (vec2){600.0f, 300.0f}, HyDebugBg);
+                draw_debug_text(glInfo, 12.0f, p[1], hex_to_HyColor(fg));
+                p[1] -= FONT_SIZE * 4;
+                draw_debug_text(drawInfo, 12.0f, p[1], hex_to_HyColor(fg));
+                p[1] -= FONT_SIZE;
+                draw_debug_text(cpuInfo, 12.0f, p[1], hex_to_HyColor(fg));
+            }
         }
         hy_renderer2d_end_scene();
         

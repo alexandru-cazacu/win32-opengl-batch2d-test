@@ -1,22 +1,22 @@
-# Hyped
+# win32-opengl-batch2d-test [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/alexandru-cazacu/HyperEngine/blob/master/LICENSE)
 
-![Hyped banner](media/banner.png)
+> **⚠ WARNING: This project was a test.**
 
-[![Banner](https://img.shields.io/static/v1?label=%20&message=Banner&color=gray)](https://liyasthomas.github.io/banner/)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/451f38a7535348e08661c58b116323be)](https://www.codacy.com?utm_source=gitlab.com&utm_medium=referral&utm_content=lunar-matter/hyped&utm_campaign=Badge_Grade)
+This repo contains a simple 2d batch renderer prototype made in C and OpenGL with some dependencies.
 
-TODO brief description of the editor.
+![](./media/progress/20220120.png)
 
-- 🚀 fast - Made in C
-- 🍂 lightweight - No oversized dependencies
-- 🎩 elegant - Custom OpenGL UI
-- 🧰 fully featured - Extensions
+Features:
+
+- Simple 2d batch renderer made with OpenGL
+- Borderless window with custom border (no interaction, just graphics)
+- Windows Icon
 
 # Building from source
 
 ## Windows <img src="./media/windows-logo.png" width=24 valign="middle">
 
-`cl` should be available in `PATH`. Search `Developer Command Prompt from VS 2019` and launch it. Use that terminal to run one of the build scripts:
+`cl` should be available in `PATH`. Search `Developer Command Prompt from VS 2019` and launch it. Use that terminal or run `./shell_win-x64.bat`. Then run one of the build scripts:
 
 ```shell
 ./build-debug.bat
@@ -24,34 +24,24 @@ TODO brief description of the editor.
 ./build-tests.bat
 ```
 
-After that one of the relative binaries will be generated
+After that the relative binary will be generated
 
 ```
-./bin\Win-x64-Debug\Hyped.exe
-./bin\Win-x64-Release\Hyped.exe
-./bin\Win-x64-Tests\Hyped.exe
+./bin/Win-x64-Debug/Hyped.exe
+./bin/Win-x64-Release/Hyped.exe
+./bin/Win-x64-Tests/Hyped.exe
 ```
 
 If you have `4coder` the process is quite simple. Just use one of the function keys.
 
-| Key | Action               |
-| --- | -------------------- |
-| F1  | Build Debug          |
-| F2  | Run Debug Bin        |
-| F3  | Build Release        |
-| F4  | Run Release Bin      |
-| F5  | Build Tests          |
-| F6  | Run Tests Bin        |
-| F7  | Generate Docs (TODO) |
-
-# Repository structure
-
-[TODO]
-
-# Contributing
-
-[TODO]
+| Key | Action        |
+| --- | ------------- |
+| F1  | Build Debug   |
+| F2  | Run Debug     |
+| F3  | Build Release |
+| F4  | Run Release   |
+| F7  | Generate Docs |
 
 # License
 
-[TODO]
+This project is available under the permissive MIT license. For more info check the [LICENSE](https://github.com/alexandru-cazacu/win32-opengl-batch2d-test/blob/master/LICENSE).
